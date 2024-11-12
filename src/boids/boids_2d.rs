@@ -1,3 +1,4 @@
+use bevy::ecs::entity;
 use bevy::prelude::*;
 use bevy::render::texture;
 use bevy::window::PrimaryWindow;
@@ -9,24 +10,24 @@ pub enum BoidType {
     Fish
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Boid {
     pub boid_type: BoidType
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Position {
-    pub position: Vec3
+    pub position: Vec2
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Velocity {
-    pub velocity: Vec3
+    pub velocity: Vec2
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Acceleration {
-    pub acceleration: Vec3
+    pub acceleration: Vec2
 }
 
 #[derive(Bundle)]
@@ -90,13 +91,13 @@ pub fn spawn_boid(
                     boid_type: BoidType::Fish
                 },
                 position: Position {
-                    position: Vec3::new(random_x, random_y, 0.0)
+                    position: Vec2::new(random_x, random_y)
                 },
                 velocity: Velocity {
-                    velocity: Vec3::new(0.0, 0.0, 0.0)
+                    velocity: Vec2::new(0.0, 0.0)
                 },
                 acceleration: Acceleration {
-                    acceleration: Vec3::new(0.0, 0.0, 0.0)
+                    acceleration: Vec2::new(0.0, 0.0)
                 },
                 sprite_bundle: SpriteBundle {
                     transform: Transform {
@@ -113,50 +114,53 @@ pub fn spawn_boid(
 }
 
 pub fn flocking(
-    mut boid_query: Query<(Entity, &Position, &Velocity, &mut Acceleration), With<Boid>>,
-    boid_settings: Res<BoidSettings>) {
-
+    mut boid_query_1: Query<(Entity, &Position, &Velocity, &mut Acceleration), With<Boid>>,
+    boid_query_2: Query<(Entity, &Position, &Velocity), With<Boid>>,
+    boid_settings: Res<BoidSettings>,
+) {
     let cohesion_range = boid_settings.cohesion_range;
     let repulsion_range = boid_settings.repulsion_range;
     let alignment_range = boid_settings.alignment_range;
 
-    for(entity, position, velocity, mut acceleration) in boid_query.iter() {
-        let mut cohesion_neighbors: Vec<(&Entity, &Position)> = Vec::new();
-        let mut repulsion_neighbors: Vec<(&Entity, &Position)> = Vec::new();
-        let mut alignment_neighbors: Vec<(&Entity, &Velocity)> = Vec::new();
-        for(other_entity, other_position, other_velocity, _) in boid_query.iter() {
-            if(entity == other_entity) {
+    for(entity, position, _, mut acceleration) in boid_query_1.iter_mut() {
+        let mut cohesion_neighbors: Vec<(Entity, &Position)> = Vec::new();
+        let mut repulsion_neighbors: Vec<(Entity, &Position)> = Vec::new();
+        let mut alignment_neighbors: Vec<(Entity, &Velocity)> = Vec::new();
+
+        for (other_entity, other_position, other_velocity) in boid_query_2.iter() {
+            if entity == other_entity {
                 continue;
             }
             let distance = position.position.distance(other_position.position);
-            if(distance < cohesion_range && distance > repulsion_range) {
-                cohesion_neighbors.push((&other_entity, other_position));
+            if distance < cohesion_range && distance > repulsion_range {
+                cohesion_neighbors.push((other_entity, other_position));
             }
-            if(distance < repulsion_range) {
-                repulsion_neighbors.push((&other_entity, other_position));
+            if distance < repulsion_range {
+                repulsion_neighbors.push((other_entity, other_position));
             }
-            if(distance < alignment_range) {
-                alignment_neighbors.push((&other_entity, other_velocity));
+            if distance < alignment_range {
+                alignment_neighbors.push((other_entity, other_velocity));
             }
         }
-        let cohesion_force: Vec3 = cohesion(position, &cohesion_neighbors); // position est déjà une ref, pas besoin de & (ça marche quand même grâce à l'auto-déréférencement)
-        let avoidance_force: Vec3 = avoidance(position, &repulsion_neighbors);
-        let alignment_force: Vec3 = alignment(&position, &alignment_neighbors);
+        let cohesion_force: Vec2 = cohesion(position, &cohesion_neighbors);
+        let avoidance_force: Vec2 = avoidance(position, &repulsion_neighbors);
+        let alignment_force: Vec2 = alignment(position, &alignment_neighbors);
+
         acceleration.acceleration += cohesion_force + avoidance_force + alignment_force;
     }
-
 }
 
-pub fn cohesion(position: &Position, cohesion_neighbors: &[(&Entity, &Position)]) -> Vec3 {
-    Vec3::default()
+
+pub fn cohesion(position: &Position, cohesion_neighbors: &Vec<(Entity, &Position)>) -> Vec2 {
+    Vec2::default()
 }
 
-pub fn avoidance(position: &Position, repulsion_neighbors: &[(&Entity, &Position)]) -> Vec3 {
-    Vec3::default()
+pub fn avoidance(position: &Position, repulsion_neighbors: &Vec<(Entity, &Position)>) -> Vec2 {
+    Vec2::default()
 }
 
-pub fn alignment(position: &Position, alignment_neighbors: &[(&Entity, &Velocity)]) -> Vec3 {
-    Vec3::default()
+pub fn alignment(position: &Position, alignment_neighbors: &Vec<(Entity, &Velocity)>) -> Vec2 {
+    Vec2::default()
 }
 
 pub fn print_boids_types(boid_query: Query<&Boid>) {

@@ -1,6 +1,6 @@
 use bevy::{prelude::*, render::view::window, window::PrimaryWindow};
-use boids::BoidType;
 mod boids;
+use boids::boids_2d::BoidType;
 
 pub const BOIDS_COUNT: usize = 50;
 pub const BOIDS_COHESION_RANGE: f32 = 50.0;
@@ -12,8 +12,8 @@ fn main() {
     App::new()
     .add_plugins(DefaultPlugins)
     .add_systems(Startup, spawn_camera)
-    .insert_resource(boids::BoidSettings::new(BOIDS_COUNT, BOIDS_COHESION_RANGE, BOIDS_REPULSION_RANGE, BOIDS_ALIGNMENT_RANGE, BOIDS_TYPE))
-    .add_systems(Startup, boids::spawn_boid)
+    .insert_resource(boids::boids_2d::BoidSettings::new(BOIDS_COUNT, BOIDS_COHESION_RANGE, BOIDS_REPULSION_RANGE, BOIDS_ALIGNMENT_RANGE, BOIDS_TYPE))
+    .add_systems(Startup, boids::boids_2d::spawn_boid)
     .run();
 }
 
