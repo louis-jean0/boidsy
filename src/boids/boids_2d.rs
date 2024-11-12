@@ -116,13 +116,13 @@ pub fn spawn_boid(
 pub fn flocking(
     mut boid_query_1: Query<(Entity, &Position, &Velocity, &mut Acceleration), With<Boid>>,
     boid_query_2: Query<(Entity, &Position, &Velocity), With<Boid>>,
-    boid_settings: Res<BoidSettings>,
+    boid_settings: Res<BoidSettings>
 ) {
     let cohesion_range = boid_settings.cohesion_range;
     let repulsion_range = boid_settings.repulsion_range;
     let alignment_range = boid_settings.alignment_range;
 
-    for(entity, position, _, mut acceleration) in boid_query_1.iter_mut() {
+    for(entity, position, velocity, mut acceleration) in boid_query_1.iter_mut() {
         let mut cohesion_neighbors: Vec<(Entity, &Position)> = Vec::new();
         let mut repulsion_neighbors: Vec<(Entity, &Position)> = Vec::new();
         let mut alignment_neighbors: Vec<(Entity, &Velocity)> = Vec::new();
@@ -144,7 +144,7 @@ pub fn flocking(
         }
         let cohesion_force: Vec2 = cohesion(position, &cohesion_neighbors);
         let avoidance_force: Vec2 = avoidance(position, &repulsion_neighbors);
-        let alignment_force: Vec2 = alignment(position, &alignment_neighbors);
+        let alignment_force: Vec2 = alignment(velocity, &alignment_neighbors);
 
         acceleration.acceleration += cohesion_force + avoidance_force + alignment_force;
     }
@@ -159,10 +159,21 @@ pub fn avoidance(position: &Position, repulsion_neighbors: &Vec<(Entity, &Positi
     Vec2::default()
 }
 
-pub fn alignment(position: &Position, alignment_neighbors: &Vec<(Entity, &Velocity)>) -> Vec2 {
+pub fn alignment(velocity: &Velocity, alignment_neighbors: &Vec<(Entity, &Velocity)>) -> Vec2 {
     Vec2::default()
 }
 
+pub fn update_boid_position(
+    mut boid_query: Query<(&mut Position, &mut Velocity, &mut Acceleration), With<Boid>>,
+    delta_time: f32
+) {
+    for(mut position, mut velocity, mut acceleration) in boid_query.iter_mut() {
+        velocity.velocity += acceleration.acceleration * delta_time;
+        position.position += velocity.velocity * delta_time;
+        acceleration.acceleration = Vec2::ZERO;
+    }
+}
+    
 pub fn print_boids_types(boid_query: Query<&Boid>) {
     for boid in boid_query.iter() {
         let type_name = match boid.boid_type {
