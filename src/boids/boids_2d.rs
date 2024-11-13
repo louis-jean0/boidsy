@@ -4,6 +4,8 @@ use bevy::render::texture;
 use bevy::window::PrimaryWindow;
 use rand::prelude::*;
 
+pub const SPRITE_SIZE: f32 = 32.0;
+
 #[derive(Debug)]
 pub enum BoidType {
     Bird,
@@ -42,30 +44,40 @@ pub struct BoidBundle {
 #[derive(Resource)]
 pub struct BoidSettings {
     pub count: usize,
-    pub cohesion_range: f32,
-    pub repulsion_range: f32,
-    pub alignment_range: f32,
+    pub visual_range: f32,
+    pub separation_range: f32,
+    pub cohesion: f32,
+    pub alignment: f32,
+    pub separation: f32,
+    pub min_speed: f32,
+    pub max_speed: f32,
     pub boid_type: BoidType
 }
 
-impl BoidSettings {
-    pub fn default() -> Self {
+impl Default for BoidSettings {
+    fn default() -> Self {
         BoidSettings {
             count: 50,
-            cohesion_range: 50.0,
-            repulsion_range: 10.0,
-            alignment_range: 50.0,
+            visual_range: 40.0,
+            separation_range: 8.0,
+            cohesion: 0.1,
+            alignment: 0.05,
+            separation: 0.1,
+            min_speed: 20.0,
+            max_speed: 100.0,
             boid_type: BoidType::Fish
         }
     }
+}
 
-    pub fn new(count: usize, cohesion_range: f32, repulsion_range: f32, alignment_range: f32, boid_type: BoidType) -> Self {
+impl BoidSettings {
+    pub fn new(count: usize, visual_range: f32, separation_range: f32, boid_type: BoidType) -> Self {
         BoidSettings {
             count: count,
-            cohesion_range: cohesion_range,
-            repulsion_range: repulsion_range,
-            alignment_range: alignment_range,
-            boid_type: boid_type
+            visual_range: visual_range,
+            separation_range: separation_range,
+            boid_type: boid_type,
+            ..Default::default()
         }
     }
 }
@@ -85,6 +97,7 @@ pub fn spawn_boid(
     for _ in 0..boid_settings.count {
         let random_x = random::<f32>() * window.width();
         let random_y = random::<f32>() * window.height();
+        let random_angle = random::<f32>() * 360.0 * (std::f32::consts::PI / 180.0); // En radians
         commands.spawn(
             BoidBundle {
                 boid: Boid {
@@ -94,7 +107,7 @@ pub fn spawn_boid(
                     position: Vec2::new(random_x, random_y)
                 },
                 velocity: Velocity {
-                    velocity: Vec2::new(0.0, 0.0)
+                    velocity: Vec2::new(f32::cos(random_angle), f32::sin(random_angle))
                 },
                 acceleration: Acceleration {
                     acceleration: Vec2::new(0.0, 0.0)
@@ -103,7 +116,7 @@ pub fn spawn_boid(
                     transform: Transform {
                         translation: Vec3::new(random_x, random_y, 0.0),
                         rotation: Quat::IDENTITY,
-                        scale: Vec3::new(0.1,0.1,0.1)
+                        ..default()
                     },
                     texture: asset_server.load(texture_path),
                     ..default()
@@ -118,9 +131,8 @@ pub fn flocking(
     boid_query_2: Query<(Entity, &Position, &Velocity), With<Boid>>,
     boid_settings: Res<BoidSettings>
 ) {
-    let cohesion_range = boid_settings.cohesion_range;
-    let repulsion_range = boid_settings.repulsion_range;
-    let alignment_range = boid_settings.alignment_range;
+    let visual_range = boid_settings.visual_range;
+    let separation_range = boid_settings.separation_range;
 
     for(entity, position, velocity, mut acceleration) in boid_query_1.iter_mut() {
         let mut cohesion_neighbors: Vec<(Entity, &Position)> = Vec::new();
@@ -132,54 +144,121 @@ pub fn flocking(
                 continue;
             }
             let distance = position.position.distance(other_position.position);
-            if distance < cohesion_range && distance > repulsion_range {
+            if distance < visual_range && distance > separation_range {
                 cohesion_neighbors.push((other_entity, other_position));
-            }
-            if distance < repulsion_range {
-                repulsion_neighbors.push((other_entity, other_position));
-            }
-            if distance < alignment_range {
                 alignment_neighbors.push((other_entity, other_velocity));
             }
+            if distance < separation_range {
+                repulsion_neighbors.push((other_entity, other_position));
+            }
         }
-        let cohesion_force: Vec2 = cohesion(position, &cohesion_neighbors);
-        let avoidance_force: Vec2 = avoidance(position, &repulsion_neighbors);
-        let alignment_force: Vec2 = alignment(velocity, &alignment_neighbors);
+        let cohesion_force: Vec2 = cohesion(position, &cohesion_neighbors, boid_settings.cohesion);
+        let avoidance_force: Vec2 = avoidance(position, &repulsion_neighbors, boid_settings.separation);
+        let alignment_force: Vec2 = alignment(velocity, &alignment_neighbors, boid_settings.alignment);
+
+        //println!("Cohesion force : {:?}", cohesion_force);
 
         acceleration.acceleration += cohesion_force + avoidance_force + alignment_force;
+        //println!("{:?}", acceleration.acceleration);
     }
 }
 
-
-pub fn cohesion(position: &Position, cohesion_neighbors: &Vec<(Entity, &Position)>) -> Vec2 {
-    Vec2::default()
+pub fn cohesion(position: &Position, cohesion_neighbors: &Vec<(Entity, &Position)>, cohesion_coeff: f32) -> Vec2 {
+    let mut cohesion_force: Vec2 = Vec2::ZERO;
+    let nb_neighbors = cohesion_neighbors.len();
+    if nb_neighbors == 0 {
+        return Vec2::ZERO;
+    }
+    for (_, other_position) in cohesion_neighbors.iter() {
+        cohesion_force.x += other_position.position.x;
+        cohesion_force.y += other_position.position.y;
+    }
+    cohesion_force /= nb_neighbors as f32;
+    (cohesion_force - position.position) * cohesion_coeff
 }
 
-pub fn avoidance(position: &Position, repulsion_neighbors: &Vec<(Entity, &Position)>) -> Vec2 {
-    Vec2::default()
+pub fn avoidance(position: &Position, repulsion_neighbors: &Vec<(Entity, &Position)>, separation_coeff: f32) -> Vec2 {
+    let mut avoidance_force: Vec2 = Vec2::ZERO;
+    for (_, other_position) in repulsion_neighbors.iter() {
+        avoidance_force += position.position - other_position.position;
+    }
+    avoidance_force * separation_coeff
 }
 
-pub fn alignment(velocity: &Velocity, alignment_neighbors: &Vec<(Entity, &Velocity)>) -> Vec2 {
-    Vec2::default()
+pub fn alignment(velocity: &Velocity, alignment_neighbors: &Vec<(Entity, &Velocity)>, alignment_coeff: f32) -> Vec2 {
+    let mut alignment_force: Vec2 = Vec2::ZERO;
+    let nb_neighbors = alignment_neighbors.len();
+    if nb_neighbors == 0 {
+        return Vec2::ZERO;
+    }
+    for (_, other_velocity) in alignment_neighbors.iter() {
+        alignment_force.x += other_velocity.velocity.x;
+        alignment_force.y += other_velocity.velocity.y;
+    }
+    alignment_force /= nb_neighbors as f32;
+    (alignment_force - velocity.velocity) * alignment_coeff
 }
 
 pub fn update_boid_position(
-    mut boid_query: Query<(&mut Position, &mut Velocity, &mut Acceleration), With<Boid>>,
-    delta_time: f32
+    mut boid_query: Query<(&mut Position, &mut Velocity, &mut Acceleration, &mut Transform), With<Boid>>,
+    boid_settings: Res<BoidSettings>,
+    time: Res<Time>
 ) {
-    for(mut position, mut velocity, mut acceleration) in boid_query.iter_mut() {
-        velocity.velocity += acceleration.acceleration * delta_time;
-        position.position += velocity.velocity * delta_time;
+    for(mut position, mut velocity, mut acceleration, mut transform) in boid_query.iter_mut() {
+        velocity.velocity += acceleration.acceleration * time.delta_seconds();
+        if velocity.velocity.length() < boid_settings.min_speed {
+            velocity.velocity = velocity.velocity.normalize() * boid_settings.min_speed;
+        }
+        if velocity.velocity.length() > boid_settings.max_speed {
+            velocity.velocity = velocity.velocity.normalize() * boid_settings.max_speed;
+        }
+        position.position += velocity.velocity * time.delta_seconds();
+        transform.translation = Vec3::new(position.position.x, position.position.y, 0.0); // Pour faire bouger le sprite en lui-même
         acceleration.acceleration = Vec2::ZERO;
     }
 }
-    
-pub fn print_boids_types(boid_query: Query<&Boid>) {
-    for boid in boid_query.iter() {
-        let type_name = match boid.boid_type {
-            BoidType::Bird => "Bird",
-            BoidType::Fish => "Fish"
-        };
-        println!("Boid type : {}", type_name);
+
+pub fn confine_movement(
+    mut boid_query: Query<(&mut Position, &mut Velocity, &mut Acceleration), With<Boid>>,
+    window_query: Query<&Window, With<PrimaryWindow>>
+) {
+    let window = window_query.get_single().unwrap();
+    let half_sprite_size = SPRITE_SIZE / 2.0;
+    let x_min = 0.0 + half_sprite_size;
+    let y_min = 0.0 + half_sprite_size;
+    let x_max = window.width() - half_sprite_size;
+    let y_max = window.height() - half_sprite_size;
+    for (mut position, mut velocity, mut acceleration) in boid_query.iter_mut() {
+        if position.position.x > x_max {
+            position.position.x = x_max;
+            //velocity.velocity *= -1.0;
+            rebond(&mut velocity, Vec2::new(-1.0,0.0));
+        } else if position.position.x < x_min {
+            position.position.x = x_min;
+            //velocity.velocity *= -1.0;
+            rebond(&mut velocity, Vec2::new(1.0,0.0));
+        }
+        if position.position.y > y_max {
+            position.position.y = y_max;
+            //velocity.velocity *= -1.0;
+            rebond(&mut velocity, Vec2::new(0.0,-1.0));
+        } else if position.position.y < y_min {
+            position.position.y = y_min;
+            //velocity.velocity *= -1.0;
+            rebond(&mut velocity, Vec2::new(0.0,1.0));
+        }
     }
+}
+
+pub fn rebond(mut velocity: &mut Velocity, normal: Vec2) {
+    let angle_max: f32 = 45.0 * (std::f32::consts::PI / 180.0);
+    let dot_velocity_normal = velocity.velocity.dot(normal);
+    let reflection: Vec2 = velocity.velocity - 2.0 * dot_velocity_normal * normal;
+    let angle = reflection.y.atan2(reflection.x);
+    let mut rng = rand::thread_rng();
+    let variation: f32 = rng.gen_range(-angle_max..angle_max);
+    let new_angle = angle + variation;
+    let magnitude = reflection.length();
+    let new_velocity = Vec2::new(magnitude * f32::cos(new_angle), magnitude * f32::sin(new_angle));
+    velocity.velocity = new_velocity;
 }
