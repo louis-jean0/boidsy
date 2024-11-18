@@ -1,9 +1,10 @@
-use bevy::ecs::entity;
+use bevy::ecs::{entity, event};
 use bevy::prelude::*;
 use bevy::render::texture;
 use bevy::ui::debug;
 use bevy::window::PrimaryWindow;
 use rand::prelude::*;
+use system_adapter::new;
 
 pub const SPRITE_SIZE: f32 = 32.0;
 pub const TARGET_BOID_ID_DEBUG: u32 = 42;
@@ -34,6 +35,12 @@ pub struct Acceleration {
     pub acceleration: Vec2
 }
 
+#[derive(Event)]
+pub struct ApplyForceEvent {
+    pub entity: Entity,
+    pub force: Vec2
+}
+
 #[derive(Bundle)]
 pub struct BoidBundle {
     pub boid: Boid,
@@ -48,6 +55,7 @@ pub struct BoidSettings {
     pub count: usize,
     pub visual_range: f32,
     pub separation_range: f32,
+    pub protected_range: f32,
     pub cohesion_coeff: f32,
     pub alignment_coeff: f32,
     pub separation_coeff: f32,
@@ -60,12 +68,13 @@ impl Default for BoidSettings {
     fn default() -> Self {
         BoidSettings {
             count: 500,
-            visual_range: 100.0,
-            separation_range: 25.0,
-            cohesion_coeff: 0.05,
-            alignment_coeff: 0.005,
-            separation_coeff: 0.05,
-            min_speed: 20.0,
+            visual_range: 20.0,
+            separation_range: 10.0,
+            protected_range: 5.0,
+            cohesion_coeff: 20.0,
+            alignment_coeff: 5.0,
+            separation_coeff: 3.0,
+            min_speed: 200.0,
             max_speed: 500.0,
             boid_type: BoidType::Fish
         }
@@ -92,7 +101,7 @@ pub fn spawn_boid(
 
     let window = window_query.get_single().unwrap();
     let texture_path = match boid_settings.boid_type {
-        BoidType::Bird => "../assets/bird.png",
+        BoidType::Bird => "../assets/resize_test.png",
         BoidType::Fish => "../assets/fish.png"
     };
 
@@ -129,22 +138,18 @@ pub fn spawn_boid(
 }
 
 pub fn flocking(
-    mut boid_query_1: Query<(Entity, &Position, &Velocity, &mut Acceleration, &mut Handle<Image>), With<Boid>>,
-    boid_query_2: Query<(Entity, &Position, &Velocity), With<Boid>>,
-    boid_settings: Res<BoidSettings>,
-    asset_server: Res<AssetServer>
+    boid_query: Query<(Entity, &Position, &Velocity), With<Boid>>,
+    mut event_writer: EventWriter<ApplyForceEvent>,
+    boid_settings: Res<BoidSettings>
 ) {
     let visual_range = boid_settings.visual_range;
     let separation_range = boid_settings.separation_range;
 
-    for(entity, position, velocity, mut acceleration, mut texture_handle) in boid_query_1.iter_mut() {
+    for(entity, position, velocity) in boid_query.iter() {
         let mut cohesion_neighbors: Vec<(Entity, &Position)> = Vec::new();
         let mut repulsion_neighbors: Vec<(Entity, &Position)> = Vec::new();
         let mut alignment_neighbors: Vec<(Entity, &Velocity)> = Vec::new();
-        let is_target_boid_debug = entity.index() == TARGET_BOID_ID_DEBUG;
-        let debug_texture = asset_server.load("../assets/resize_test.png");
-
-        for (other_entity, other_position, other_velocity) in boid_query_2.iter() {
+        for (other_entity, other_position, other_velocity) in boid_query.iter() {
             if entity == other_entity {
                 continue;
             }
@@ -156,39 +161,41 @@ pub fn flocking(
                 cohesion_neighbors.push((other_entity, other_position));
                 alignment_neighbors.push((other_entity, other_velocity));
             }
-            
         }
         let cohesion_force: Vec2 = cohesion(position, &cohesion_neighbors, boid_settings.cohesion_coeff);
         let avoidance_force: Vec2 = avoidance(position, &repulsion_neighbors, boid_settings.separation_coeff);
         let alignment_force: Vec2 = alignment(&velocity, &alignment_neighbors, boid_settings.alignment_coeff);
+        let total_force = cohesion_force + avoidance_force + alignment_force;
+        event_writer.send(ApplyForceEvent {
+            entity: entity,
+            force: total_force
+        });
 
-        acceleration.acceleration += cohesion_force + avoidance_force + alignment_force;
+        // // DEBUG
+        // if is_target_boid_debug {
+        //     *texture_handle = debug_texture.clone();
+        //     println!("\n=== Débogage du boid {} ===", TARGET_BOID_ID_DEBUG);
+        //     println!("Position: {:?}", position.position);
+        //     println!("Vitesse: {:?}", velocity.velocity);
+        //     println!("Cohesion force: {:?}", cohesion_force);
+        //     println!("Avoidance force: {:?}", avoidance_force);
+        //     println!("Alignment force: {:?}", alignment_force);
 
-        // DEBUG
-        if is_target_boid_debug {
-            *texture_handle = debug_texture.clone();
-            println!("\n=== Débogage du boid {} ===", TARGET_BOID_ID_DEBUG);
-            println!("Position: {:?}", position.position);
-            println!("Vitesse: {:?}", velocity.velocity);
-            println!("Cohesion force: {:?}", cohesion_force);
-            println!("Avoidance force: {:?}", avoidance_force);
-            println!("Alignment force: {:?}", alignment_force);
+        //     println!("Voisins pour cohesion:");
+        //     for (neighbor_entity, neighbor_position) in &cohesion_neighbors {
+        //         println!("- Boid {} à la position {:?}", neighbor_entity.index(), neighbor_position.position);
+        //     }
 
-            println!("Voisins pour cohesion:");
-            for (neighbor_entity, neighbor_position) in &cohesion_neighbors {
-                println!("- Boid {} à la position {:?}", neighbor_entity.index(), neighbor_position.position);
-            }
+        //     println!("Voisins pour avoidance:");
+        //     for (neighbor_entity, neighbor_position) in &repulsion_neighbors {
+        //         println!("- Boid {} à la position {:?}", neighbor_entity.index(), neighbor_position.position);
+        //     }
 
-            println!("Voisins pour avoidance:");
-            for (neighbor_entity, neighbor_position) in &repulsion_neighbors {
-                println!("- Boid {} à la position {:?}", neighbor_entity.index(), neighbor_position.position);
-            }
-
-            println!("Voisins pour alignment:");
-            for (neighbor_entity, neighbor_velocity) in &alignment_neighbors {
-                println!("- Boid {} avec la vitesse {:?}", neighbor_entity.index(), neighbor_velocity.velocity);
-            }
-        }
+        //     println!("Voisins pour alignment:");
+        //     for (neighbor_entity, neighbor_velocity) in &alignment_neighbors {
+        //         println!("- Boid {} avec la vitesse {:?}", neighbor_entity.index(), neighbor_velocity.velocity);
+        //     }
+        // }
     }
 }
 
@@ -204,9 +211,9 @@ pub fn cohesion(position: &Position, cohesion_neighbors: &Vec<(Entity, &Position
     }
     cohesion_force /= nb_neighbors as f32;
     cohesion_force = cohesion_force - position.position;
-    if cohesion_force.length() > 0.0 {
-        cohesion_force = cohesion_force.normalize();
-    }
+    // if cohesion_force.length() > 0.0 {
+    //     cohesion_force = cohesion_force.normalize();
+    // }
     cohesion_force * cohesion_coeff
 }
 
@@ -215,9 +222,9 @@ pub fn avoidance(position: &Position, repulsion_neighbors: &Vec<(Entity, &Positi
     for (_, other_position) in repulsion_neighbors.iter() {
         avoidance_force += position.position - other_position.position;
     }
-    if avoidance_force.length() > 0.0 {
-        avoidance_force = avoidance_force.normalize();
-    }
+    // if avoidance_force.length() > 0.0 {
+    //     avoidance_force = avoidance_force.normalize();
+    // }
     avoidance_force * separation_coeff
 }
 
@@ -233,10 +240,22 @@ pub fn alignment(velocity: &Velocity, alignment_neighbors: &Vec<(Entity, &Veloci
     }
     alignment_force /= nb_neighbors as f32;
     alignment_force = alignment_force - velocity.velocity;
-    if alignment_force.length() > 0.0 {
-        alignment_force = alignment_force.normalize();
-    }
+    // if alignment_force.length() > 0.0 {
+    //     alignment_force = alignment_force.normalize();
+    // }
     alignment_force * alignment_coeff
+}
+
+pub fn apply_forces_system(
+    mut forces: EventReader<ApplyForceEvent>,
+    mut boid_query: Query<&mut Acceleration, With<Boid>>
+) {
+    for ApplyForceEvent{entity, force} in forces.read() {
+        if let Ok(mut acceleration) = boid_query.get_mut(*entity) {
+            acceleration.acceleration += *force;
+            println!("{:?}", acceleration.acceleration);
+        }
+    } 
 }
 
 pub fn update_boid_position(
@@ -255,6 +274,7 @@ pub fn update_boid_position(
         position.position += velocity.velocity * time.delta_seconds();
         transform.translation = Vec3::new(position.position.x, position.position.y, 0.0); // Pour faire bouger le sprite en lui-même
         acceleration.acceleration = Vec2::ZERO;
+        transform.rotation = Quat::from_rotation_z(-velocity.velocity.x.atan2(velocity.velocity.y));
     }
 }
 
@@ -295,10 +315,10 @@ pub fn rebond(mut velocity: &mut Velocity, normal: Vec2) {
     let dot_velocity_normal = velocity.velocity.dot(normal);
     let reflection: Vec2 = velocity.velocity - 2.0 * dot_velocity_normal * normal;
     let angle = reflection.y.atan2(reflection.x);
-    // let mut rng = rand::thread_rng();
-    // let variation: f32 = rng.gen_range(-angle_max..angle_max);
-    //let new_angle = angle + variation;
+    let mut rng = rand::thread_rng();
+    let variation: f32 = rng.gen_range(-angle_max..angle_max);
+    let new_angle = angle + variation;
     let magnitude = reflection.length();
-    let new_velocity = Vec2::new(magnitude * f32::cos(angle), magnitude * f32::sin(angle));
+    let new_velocity = Vec2::new(magnitude * f32::cos(new_angle), magnitude * f32::sin(new_angle));
     velocity.velocity = new_velocity;
 }
