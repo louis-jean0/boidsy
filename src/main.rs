@@ -3,8 +3,8 @@ mod boids;
 use boids::boids_2d::BoidType;
 
 pub const BOIDS_COUNT: usize = 500;
-pub const BOIDS_VISUAL_RANGE: f32 = 100.0;
-pub const BOIDS_SEPARATION_RANGE: f32 = 50.0;
+pub const BOIDS_VISUAL_RANGE: f32 = 50.0;
+pub const BOIDS_SEPARATION_RANGE: f32 = 20.0;
 pub const BOIDS_TYPE: BoidType = BoidType::Bird;
 
 fn main() {

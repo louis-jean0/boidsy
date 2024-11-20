@@ -55,10 +55,11 @@ pub struct BoidSettings {
     pub count: usize,
     pub visual_range: f32,
     pub separation_range: f32,
-    pub protected_range: f32,
+    pub min_distance_between_boids: f32,
     pub cohesion_coeff: f32,
     pub alignment_coeff: f32,
     pub separation_coeff: f32,
+    pub collision_coeff: f32,
     pub min_speed: f32,
     pub max_speed: f32,
     pub boid_type: BoidType
@@ -68,12 +69,13 @@ impl Default for BoidSettings {
     fn default() -> Self {
         BoidSettings {
             count: 500,
-            visual_range: 20.0,
-            separation_range: 10.0,
-            protected_range: 5.0,
+            visual_range: 15.0,
+            separation_range: 7.5,
+            min_distance_between_boids: 16.0,
             cohesion_coeff: 20.0,
             alignment_coeff: 5.0,
-            separation_coeff: 3.0,
+            separation_coeff: 15.0,
+            collision_coeff: 100.0,
             min_speed: 200.0,
             max_speed: 500.0,
             boid_type: BoidType::Fish
@@ -101,7 +103,7 @@ pub fn spawn_boid(
 
     let window = window_query.get_single().unwrap();
     let texture_path = match boid_settings.boid_type {
-        BoidType::Bird => "../assets/resize_test.png",
+        BoidType::Bird => "../assets/bird.png",
         BoidType::Fish => "../assets/fish.png"
     };
 
@@ -146,104 +148,73 @@ pub fn flocking(
     let separation_range = boid_settings.separation_range;
 
     for(entity, position, velocity) in boid_query.iter() {
-        let mut cohesion_neighbors: Vec<(Entity, &Position)> = Vec::new();
-        let mut repulsion_neighbors: Vec<(Entity, &Position)> = Vec::new();
-        let mut alignment_neighbors: Vec<(Entity, &Velocity)> = Vec::new();
+        let mut cohesion_neighbors: Vec<&Position> = Vec::new();
+        let mut repulsion_neighbors: Vec<(&Position, f32)> = Vec::new();
+        let mut alignment_neighbors: Vec<&Velocity> = Vec::new();
         for (other_entity, other_position, other_velocity) in boid_query.iter() {
             if entity == other_entity {
                 continue;
             }
             let distance = position.position.abs().distance(other_position.position.abs());
             if distance < separation_range {
-                repulsion_neighbors.push((other_entity, other_position));
+                repulsion_neighbors.push((other_position, distance));
             }
             else if distance < visual_range && distance > separation_range {
-                cohesion_neighbors.push((other_entity, other_position));
-                alignment_neighbors.push((other_entity, other_velocity));
+                cohesion_neighbors.push(other_position);
+                alignment_neighbors.push(other_velocity);
             }
         }
-        let cohesion_force: Vec2 = cohesion(position, &cohesion_neighbors, boid_settings.cohesion_coeff);
-        let avoidance_force: Vec2 = avoidance(position, &repulsion_neighbors, boid_settings.separation_coeff);
-        let alignment_force: Vec2 = alignment(&velocity, &alignment_neighbors, boid_settings.alignment_coeff);
+        let cohesion_force: Vec2 = cohesion(position, &cohesion_neighbors, &boid_settings.cohesion_coeff);
+        let avoidance_force: Vec2 = avoidance(position, &repulsion_neighbors, &boid_settings.separation_coeff, &boid_settings.min_distance_between_boids, &boid_settings.collision_coeff);
+        let alignment_force: Vec2 = alignment(&velocity, &alignment_neighbors, &boid_settings.alignment_coeff);
         let total_force = cohesion_force + avoidance_force + alignment_force;
         event_writer.send(ApplyForceEvent {
             entity: entity,
             force: total_force
         });
-
-        // // DEBUG
-        // if is_target_boid_debug {
-        //     *texture_handle = debug_texture.clone();
-        //     println!("\n=== Débogage du boid {} ===", TARGET_BOID_ID_DEBUG);
-        //     println!("Position: {:?}", position.position);
-        //     println!("Vitesse: {:?}", velocity.velocity);
-        //     println!("Cohesion force: {:?}", cohesion_force);
-        //     println!("Avoidance force: {:?}", avoidance_force);
-        //     println!("Alignment force: {:?}", alignment_force);
-
-        //     println!("Voisins pour cohesion:");
-        //     for (neighbor_entity, neighbor_position) in &cohesion_neighbors {
-        //         println!("- Boid {} à la position {:?}", neighbor_entity.index(), neighbor_position.position);
-        //     }
-
-        //     println!("Voisins pour avoidance:");
-        //     for (neighbor_entity, neighbor_position) in &repulsion_neighbors {
-        //         println!("- Boid {} à la position {:?}", neighbor_entity.index(), neighbor_position.position);
-        //     }
-
-        //     println!("Voisins pour alignment:");
-        //     for (neighbor_entity, neighbor_velocity) in &alignment_neighbors {
-        //         println!("- Boid {} avec la vitesse {:?}", neighbor_entity.index(), neighbor_velocity.velocity);
-        //     }
-        // }
     }
 }
 
-pub fn cohesion(position: &Position, cohesion_neighbors: &Vec<(Entity, &Position)>, cohesion_coeff: f32) -> Vec2 {
+pub fn cohesion(position: &Position, cohesion_neighbors: &Vec<&Position>, cohesion_coeff: &f32) -> Vec2 {
     let mut cohesion_force: Vec2 = Vec2::ZERO;
     let nb_neighbors = cohesion_neighbors.len();
     if nb_neighbors == 0 {
         return Vec2::ZERO;
     }
-    for (_, other_position) in cohesion_neighbors.iter() {
-        cohesion_force.x += other_position.position.x;
-        cohesion_force.y += other_position.position.y;
+    for other_position in cohesion_neighbors.iter() {
+        cohesion_force += other_position.position;
     }
     cohesion_force /= nb_neighbors as f32;
     cohesion_force = cohesion_force - position.position;
-    // if cohesion_force.length() > 0.0 {
-    //     cohesion_force = cohesion_force.normalize();
-    // }
-    cohesion_force * cohesion_coeff
+    cohesion_force * *cohesion_coeff
 }
 
-pub fn avoidance(position: &Position, repulsion_neighbors: &Vec<(Entity, &Position)>, separation_coeff: f32) -> Vec2 {
+pub fn avoidance(position: &Position, repulsion_neighbors: &Vec<(&Position, f32)>, separation_coeff: &f32, min_distance_between_boids: &f32, collision_coeff: &f32) -> Vec2 {
     let mut avoidance_force: Vec2 = Vec2::ZERO;
-    for (_, other_position) in repulsion_neighbors.iter() {
-        avoidance_force += position.position - other_position.position;
+    for (other_position, distance) in repulsion_neighbors.iter() {
+        if distance < min_distance_between_boids {
+            let interpolation_factor = (*min_distance_between_boids - distance) / *min_distance_between_boids;
+            avoidance_force += (position.position - other_position.position) * *collision_coeff * interpolation_factor;
+        }
+        else {
+            avoidance_force += position.position - other_position.position;
+        }
     }
-    // if avoidance_force.length() > 0.0 {
-    //     avoidance_force = avoidance_force.normalize();
-    // }
-    avoidance_force * separation_coeff
+    avoidance_force * *separation_coeff
 }
 
-pub fn alignment(velocity: &Velocity, alignment_neighbors: &Vec<(Entity, &Velocity)>, alignment_coeff: f32) -> Vec2 {
+pub fn alignment(velocity: &Velocity, alignment_neighbors: &Vec<&Velocity>, alignment_coeff: &f32) -> Vec2 {
     let mut alignment_force: Vec2 = Vec2::ZERO;
     let nb_neighbors = alignment_neighbors.len();
     if nb_neighbors == 0 {
         return Vec2::ZERO;
     }
-    for (_, other_velocity) in alignment_neighbors.iter() {
-        alignment_force.x += other_velocity.velocity.x;
-        alignment_force.y += other_velocity.velocity.y;
+    for other_velocity in alignment_neighbors.iter() {
+        alignment_force += other_velocity.velocity;
     }
     alignment_force /= nb_neighbors as f32;
     alignment_force = alignment_force - velocity.velocity;
-    // if alignment_force.length() > 0.0 {
-    //     alignment_force = alignment_force.normalize();
-    // }
-    alignment_force * alignment_coeff
+    alignment_force * *alignment_coeff
 }
 
 pub fn apply_forces_system(
@@ -253,9 +224,8 @@ pub fn apply_forces_system(
     for ApplyForceEvent{entity, force} in forces.read() {
         if let Ok(mut acceleration) = boid_query.get_mut(*entity) {
             acceleration.acceleration += *force;
-            println!("{:?}", acceleration.acceleration);
         }
-    } 
+    }
 }
 
 pub fn update_boid_position(
@@ -274,7 +244,7 @@ pub fn update_boid_position(
         position.position += velocity.velocity * time.delta_seconds();
         transform.translation = Vec3::new(position.position.x, position.position.y, 0.0); // Pour faire bouger le sprite en lui-même
         acceleration.acceleration = Vec2::ZERO;
-        transform.rotation = Quat::from_rotation_z(-velocity.velocity.x.atan2(velocity.velocity.y));
+        //transform.rotation = Quat::from_rotation_z(-velocity.velocity.x.atan2(velocity.velocity.y));
     }
 }
 
@@ -291,20 +261,16 @@ pub fn confine_movement (
     for (mut position, mut velocity, mut acceleration) in boid_query.iter_mut() {
         if position.position.x > x_max {
             position.position.x = x_max;
-            //velocity.velocity *= -1.0;
             rebond(&mut velocity, Vec2::new(-1.0,0.0));
         } else if position.position.x < x_min {
             position.position.x = x_min;
-            //velocity.velocity *= -1.0;
             rebond(&mut velocity, Vec2::new(1.0,0.0));
         }
         if position.position.y > y_max {
             position.position.y = y_max;
-            //velocity.velocity *= -1.0;
             rebond(&mut velocity, Vec2::new(0.0,-1.0));
         } else if position.position.y < y_min {
             position.position.y = y_min;
-            //velocity.velocity *= -1.0;
             rebond(&mut velocity, Vec2::new(0.0,1.0));
         }
     }
