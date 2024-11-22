@@ -157,7 +157,8 @@ pub fn update_boid_position(
         position.position += velocity.velocity * time.delta_seconds();
         transform.translation = Vec3::new(position.position.x, position.position.y, 0.0); // Pour faire bouger le sprite en lui-même
         acceleration.acceleration = Vec2::ZERO;
-        //transform.rotation = Quat::from_rotation_z(-velocity.velocity.x.atan2(velocity.velocity.y));
+        let rotation_angle = velocity.velocity.y.atan2(velocity.velocity.x);
+        transform.rotation = Quat::from_rotation_z(rotation_angle);
     }
 }
 

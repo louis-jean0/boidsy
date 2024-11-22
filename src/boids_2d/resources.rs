@@ -22,11 +22,11 @@ impl Default for BoidSettings {
             count: 500,
             visual_range: 100.0,
             separation_range: 20.0,
-            min_distance_between_boids: 32.0,
+            min_distance_between_boids: 16.0,
             cohesion_coeff: 20.0,
             alignment_coeff: 30.0,
             separation_coeff: 20.0,
-            collision_coeff: 30.0,
+            collision_coeff: 40.0,
             min_speed: 200.0,
             max_speed: 500.0,
             boid_type: BoidType::Fish
