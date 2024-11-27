@@ -22,10 +22,11 @@ impl Plugin for Boids2DPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(BoidSettings::new(BOIDS_COUNT, BOIDS_VISUAL_RANGE, BOIDS_SEPARATION_RANGE, BOIDS_TYPE))
         .add_event::<ApplyForceEvent>()
-        .add_systems(Startup, spawn_boid)
+        .add_systems(Startup, spawn_boids)
         .add_systems(Update, flocking)
         .add_systems(Update, apply_forces_system)
         .add_systems(Update, update_boid_position)
-        .add_systems(Update, confine_movement);
+        .add_systems(Update, confine_movement)
+        .add_systems(Update, adjust_population);
     }
 }

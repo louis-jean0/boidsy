@@ -8,47 +8,56 @@ use crate::boids_2d::events::*;
 
 pub const SPRITE_SIZE: f32 = 32.0;
 
-pub fn spawn_boid(
+pub fn spawn_boid_entity(
+    commands: &mut Commands,
+    window: &Window,
+    asset_server: &Res<AssetServer>,
+    boid_type: BoidType
+) {
+    let texture_path = match boid_type {
+        BoidType::Bird => "../assets/bird.png",
+        BoidType::Fish => "../assets/fish.png"
+    };
+
+    let random_x = random::<f32>() * window.width();
+    let random_y = random::<f32>() * window.height();
+    let random_angle = random::<f32>() * 360.0 * (std::f32::consts::PI / 180.0); // En radians
+    commands.spawn(
+        BoidBundle {
+            boid: Boid {
+                boid_type: boid_type
+            },
+            position: Position {
+                position: Vec2::new(random_x, random_y)
+            },
+            velocity: Velocity {
+                velocity: Vec2::new(f32::cos(random_angle), f32::sin(random_angle))
+            },
+            acceleration: Acceleration {
+                acceleration: Vec2::new(0.0,0.0)
+            },
+            sprite_bundle: SpriteBundle {
+                transform: Transform {
+                    translation: Vec3::new(random_x, random_y, 0.0),
+                    rotation: Quat::IDENTITY,
+                    ..default()
+                },
+                texture: asset_server.load(texture_path),
+                ..default()
+            }
+        }
+    );
+}
+
+pub fn spawn_boids(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
     asset_server: Res<AssetServer>,
     boid_settings: Res<BoidSettings>) {
 
     let window = window_query.get_single().unwrap();
-    let texture_path = match boid_settings.boid_type {
-        BoidType::Bird => "../assets/bird.png",
-        BoidType::Fish => "../assets/fish.png"
-    };
-
     for _ in 0..boid_settings.count {
-        let random_x = random::<f32>() * window.width();
-        let random_y = random::<f32>() * window.height();
-        let random_angle = random::<f32>() * 360.0 * (std::f32::consts::PI / 180.0); // En radians
-        commands.spawn(
-            BoidBundle {
-                boid: Boid {
-                    boid_type: BoidType::Fish
-                },
-                position: Position {
-                    position: Vec2::new(random_x, random_y)
-                },
-                velocity: Velocity {
-                    velocity: Vec2::new(f32::cos(random_angle), f32::sin(random_angle))
-                },
-                acceleration: Acceleration {
-                    acceleration: Vec2::new(0.0,0.0)
-                },
-                sprite_bundle: SpriteBundle {
-                    transform: Transform {
-                        translation: Vec3::new(random_x, random_y, 0.0),
-                        rotation: Quat::IDENTITY,
-                        ..default()
-                    },
-                    texture: asset_server.load(texture_path),
-                    ..default()
-                }
-            }
-        );
+        spawn_boid_entity(&mut commands, &window, &asset_server, boid_settings.boid_type);
     }
 }
 
@@ -164,7 +173,8 @@ pub fn update_boid_position(
 
 pub fn confine_movement (
     mut boid_query: Query<(&mut Position, &mut Velocity, &mut Acceleration), With<Boid>>,
-    window_query: Query<&Window, With<PrimaryWindow>>
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    boid_settings: Res<BoidSettings>
 ) {
     let window = window_query.get_single().unwrap();
     let half_sprite_size = SPRITE_SIZE / 2.0;
@@ -173,19 +183,33 @@ pub fn confine_movement (
     let x_max = window.width() - half_sprite_size;
     let y_max = window.height() - half_sprite_size;
     for (mut position, mut velocity, _) in boid_query.iter_mut() {
-        if position.position.x > x_max {
-            position.position.x = x_max;
-            rebond(&mut velocity, Vec2::new(-1.0,0.0));
-        } else if position.position.x < x_min {
-            position.position.x = x_min;
-            rebond(&mut velocity, Vec2::new(1.0,0.0));
+        if boid_settings.bounce_against_walls {
+            if position.position.x > x_max {
+                position.position.x = x_max;
+                rebond(&mut velocity, Vec2::new(-1.0,0.0));
+            } else if position.position.x < x_min {
+                position.position.x = x_min;
+                rebond(&mut velocity, Vec2::new(1.0,0.0));
+            }
+            if position.position.y > y_max {
+                position.position.y = y_max;
+                rebond(&mut velocity, Vec2::new(0.0,-1.0));
+            } else if position.position.y < y_min {
+                position.position.y = y_min;
+                rebond(&mut velocity, Vec2::new(0.0,1.0));
+            }
         }
-        if position.position.y > y_max {
-            position.position.y = y_max;
-            rebond(&mut velocity, Vec2::new(0.0,-1.0));
-        } else if position.position.y < y_min {
-            position.position.y = y_min;
-            rebond(&mut velocity, Vec2::new(0.0,1.0));
+        else {
+            if position.position.x > x_max {
+                position.position.x = x_min;
+            } else if position.position.x < x_min {
+                position.position.x = x_max;
+            }
+            if position.position.y > y_max {
+                position.position.y = y_min;
+            } else if position.position.y < y_min {
+                position.position.y = y_max;
+            }
         }
     }
 }
@@ -201,4 +225,32 @@ pub fn rebond(velocity: &mut Velocity, normal: Vec2) {
     let magnitude = reflection.length();
     let new_velocity = Vec2::new(magnitude * f32::cos(new_angle), magnitude * f32::sin(new_angle));
     velocity.velocity = new_velocity;
+}
+
+pub fn adjust_population(
+    boid_query: Query<Entity, With<Boid>>,
+    mut commands: Commands,
+    mut boid_settings: ResMut<BoidSettings>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    asset_server: Res<AssetServer>
+) {
+    let current_count = boid_settings.count;
+    let previous_count = boid_settings.previous_count;
+    let window = window_query.get_single().unwrap();
+
+    if current_count == previous_count {
+        return;
+    }
+    else if current_count > previous_count {
+        for _ in 0..(current_count - previous_count) {
+            spawn_boid_entity(&mut commands, &window, &asset_server, boid_settings.boid_type);
+        }
+    }
+    else {
+        let to_remove = previous_count - current_count;
+        for entity in boid_query.iter().take(to_remove) {
+            commands.entity(entity).despawn();
+        }
+    }
+    boid_settings.previous_count = current_count;
 }

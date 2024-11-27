@@ -11,8 +11,9 @@ fn main() {
     .add_plugins(DefaultPlugins)
     .add_plugins(EguiPlugin)
     .add_systems(Startup, spawn_camera)
+    .add_systems(Startup, setup_window)
     .add_plugins(Boids2DPlugin)
-    //.add_systems(Update, ui_example)
+    .add_systems(Update, ui::setup_ui)
     .run();
 }
 
@@ -31,8 +32,10 @@ pub fn spawn_camera(
     );
 }
 
-pub fn ui_example(mut egui_context: EguiContexts) {
-    egui::Window::new("Hello").show(egui_context.ctx_mut(), |ui| {
-        ui.label("world");
-    });
+fn setup_window(
+    mut window_query: Query<&mut Window, With<PrimaryWindow>>,
+) {
+    if let Ok(mut window) = window_query.get_single_mut() {
+        window.title = "Boidsy".to_string();
+    } 
 }
