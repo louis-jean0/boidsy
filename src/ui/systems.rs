@@ -12,8 +12,10 @@ pub fn setup_ui(
         ui.checkbox(bounce, "Boids bounce against walls");
         let boids_count = &mut boid_settings.count;
         ui.add(egui::Slider::new(boids_count, 0..=1000).text("Boids count"));
-        let visual_range = &mut boid_settings.visual_range;
-        ui.add(egui::Slider::new(visual_range, 0.0..=100.0).text("Visual range"));
+        let alignment_range = &mut boid_settings.alignment_range;
+        ui.add(egui::Slider::new(alignment_range, 0.0..=100.0).text("Alignment range"));
+        let cohesion_range = &mut boid_settings.cohesion_range;
+        ui.add(egui::Slider::new(cohesion_range, 0.0..=75.0).text("Cohesion range"));
         let separation_range = &mut boid_settings.separation_range;
         ui.add(egui::Slider::new(separation_range, 0.0..=50.0).text("Separation range"));
         let cohesion_coeff = &mut boid_settings.cohesion_coeff;

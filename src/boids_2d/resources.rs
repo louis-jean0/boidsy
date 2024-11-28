@@ -1,11 +1,13 @@
 use bevy::prelude::*;
+use bevy_egui::egui::emath::align;
 use crate::boids_2d::components::*;
 
 #[derive(Resource)]
 pub struct BoidSettings {
     pub count: usize,
     pub previous_count: usize,
-    pub visual_range: f32,
+    pub cohesion_range: f32,
+    pub alignment_range: f32,
     pub separation_range: f32,
     pub min_distance_between_boids: f32,
     pub cohesion_coeff: f32,
@@ -23,7 +25,8 @@ impl Default for BoidSettings {
         BoidSettings {
             count: 500,
             previous_count: 500,
-            visual_range: 100.0,
+            alignment_range: 100.0,
+            cohesion_range: 50.0,
             separation_range: 20.0,
             min_distance_between_boids: 16.0,
             cohesion_coeff: 20.0,
@@ -39,11 +42,12 @@ impl Default for BoidSettings {
 }
 
 impl BoidSettings {
-    pub fn new(count: usize, visual_range: f32, separation_range: f32, boid_type: BoidType) -> Self {
+    pub fn new(count: usize, alignment_range: f32, cohesion_range: f32, separation_range: f32, boid_type: BoidType) -> Self {
         BoidSettings {
             count: count,
             previous_count: count,
-            visual_range: visual_range,
+            alignment_range: alignment_range,
+            cohesion_range: cohesion_range,
             separation_range: separation_range,
             boid_type: boid_type,
             ..Default::default()

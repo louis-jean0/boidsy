@@ -66,7 +66,8 @@ pub fn flocking(
     mut event_writer: EventWriter<ApplyForceEvent>,
     boid_settings: Res<BoidSettings>
 ) {
-    let visual_range = boid_settings.visual_range;
+    let cohesion_range = boid_settings.cohesion_range;
+    let alignment_range = boid_settings.alignment_range;
     let separation_range = boid_settings.separation_range;
 
     for(entity, position, velocity) in boid_query.iter() {
@@ -81,8 +82,11 @@ pub fn flocking(
             if distance < separation_range {
                 repulsion_neighbors.push((other_position, distance));
             }
-            else if distance < visual_range && distance > separation_range {
+            else if distance < cohesion_range {
                 cohesion_neighbors.push(other_position);
+                
+            }
+            else if distance < alignment_range {
                 alignment_neighbors.push(other_velocity);
             }
         }
