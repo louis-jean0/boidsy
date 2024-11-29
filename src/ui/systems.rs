@@ -44,13 +44,6 @@ pub fn setup_ui(
     });
 }
 
-pub fn show_fps(mut egui_context: EguiContexts) {
-    egui::Window::new("FPS").show(egui_context.ctx_mut(), |ui| {
-        ui.label("Test");
-        ui.add(egui::TextEdit::singleline(&mut "60"));
-    });
-}
-
 pub fn setup_fps_counter(
     mut commands: Commands
 ) {

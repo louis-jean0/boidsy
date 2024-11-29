@@ -6,6 +6,7 @@ use crate::boids_2d::resources::*;
 use crate::boids_2d::bundles::*;
 use crate::boids_2d::events::*;
 
+
 pub const SPRITE_SIZE: f32 = 32.0;
 
 pub fn spawn_boid_entity(
@@ -257,4 +258,37 @@ pub fn adjust_population(
         }
     }
     boid_settings.previous_count = current_count;
+}
+
+pub fn spawn_obstacle(
+    commands: &mut Commands,
+    position: Vec2,
+    size: f32,
+    asset_server: &Res<AssetServer>,
+) {
+    // Spécifiez le chemin de la texture circulaire (assurez-vous qu'elle existe)
+    let texture_path = "../assets/circle.png";
+
+    commands.spawn((
+        ObstacleBundle {
+            position: Position { position },
+        },
+        SpriteBundle {
+            transform: Transform {
+                translation: Vec3::new(position.x, position.y, 0.0),
+                scale: Vec3::splat(size / SPRITE_SIZE), // Ajuste la taille en fonction du rayon
+                ..default()
+            },
+            texture: asset_server.load(texture_path),
+            ..default()
+        },
+    ));
+}
+
+pub fn spawn_obstacles_system(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    // Exemple : Créer un obstacle à la position (200, 300) avec une taille de 50
+    spawn_obstacle(&mut commands, Vec2::new(200.0, 300.0), 50.0, &asset_server);
 }
