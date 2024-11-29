@@ -7,6 +7,7 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, setup_ui);
+        app.add_systems(Update, setup_ui)
+        .add_systems(Update, show_fps);
     }
 }

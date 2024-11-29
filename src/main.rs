@@ -1,14 +1,25 @@
 use bevy::prelude::*;
-use bevy::window::PrimaryWindow;
+use bevy::window::{PrimaryWindow, WindowResolution};
 use bevy_egui::*;
 
 mod boids_2d;
 mod ui;
 use boids_2d::Boids2DPlugin;
 
+pub const WINDOW_WIDTH: f32 = 1920.0;
+pub const WINDOW_HEIGHT: f32 = 1080.0;
+
 fn main() {
     App::new()
-    .add_plugins(DefaultPlugins)
+    .add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            resolution: WindowResolution::new(WINDOW_WIDTH, WINDOW_HEIGHT),
+            title: "Boidsy".to_string(),
+            resizable: true,
+            ..default()
+        }),
+        ..default()
+    }))
     .add_plugins(EguiPlugin)
     .add_systems(Startup, spawn_camera)
     .add_systems(Startup, setup_window)
