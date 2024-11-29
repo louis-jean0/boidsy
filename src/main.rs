@@ -5,9 +5,12 @@ use bevy_egui::*;
 mod boids_2d;
 mod ui;
 use boids_2d::Boids2DPlugin;
+use ui::UiPlugin;
 
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
+
+
 
 fn main() {
     App::new()
@@ -24,7 +27,7 @@ fn main() {
     .add_systems(Startup, spawn_camera)
     .add_systems(Startup, setup_window)
     .add_plugins(Boids2DPlugin)
-    .add_systems(Update, ui::setup_ui)
+    .add_plugins(UiPlugin)
     .run();
 }
 
