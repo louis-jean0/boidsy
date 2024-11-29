@@ -1,14 +1,8 @@
 use bevy::prelude::*;
 
-#[derive(Clone, Copy, Debug)]
-pub enum BoidType {
-    Bird,
-    Fish
-}
-
 #[derive(Component, Debug)]
 pub struct Boid {
-    pub boid_type: BoidType
+    pub group: u8
 }
 
 #[derive(Component, Debug)]

@@ -4,7 +4,9 @@ use bevy_egui::*;
 
 mod boids_2d;
 mod ui;
+mod input;
 use boids_2d::Boids2DPlugin;
+use input::InputPlugin;
 
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
@@ -22,8 +24,8 @@ fn main() {
     }))
     .add_plugins(EguiPlugin)
     .add_systems(Startup, spawn_camera)
-    .add_systems(Startup, setup_window)
     .add_plugins(Boids2DPlugin)
+    .add_plugins(InputPlugin)
     .add_systems(Update, ui::setup_ui)
     .run();
 }
@@ -41,12 +43,4 @@ pub fn spawn_camera(
             ..default()
         }
     );
-}
-
-fn setup_window(
-    mut window_query: Query<&mut Window, With<PrimaryWindow>>,
-) {
-    if let Ok(mut window) = window_query.get_single_mut() {
-        window.title = "Boidsy".to_string();
-    } 
 }

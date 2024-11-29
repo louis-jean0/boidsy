@@ -6,7 +6,6 @@ pub mod resources;
 pub mod bundles;
 pub mod events;
 
-use components::*;
 use events::ApplyForceEvent;
 use resources::*;
 use systems::*;
@@ -15,13 +14,13 @@ pub const BOIDS_COUNT: usize = 500;
 pub const BOIDS_ALIGNMENT_RANGE: f32 = 100.0;
 pub const BOIDS_COHESION_RANGE: f32 = 50.0;
 pub const BOIDS_SEPARATION_RANGE: f32 = 20.0;
-pub const BOIDS_TYPE: BoidType = BoidType::Bird;
 
 pub struct Boids2DPlugin;
 
 impl Plugin for Boids2DPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(BoidSettings::new(BOIDS_COUNT,BOIDS_ALIGNMENT_RANGE, BOIDS_COHESION_RANGE, BOIDS_SEPARATION_RANGE, BOIDS_TYPE))
+        app.insert_resource(BoidSettings::new(BOIDS_COUNT,BOIDS_ALIGNMENT_RANGE, BOIDS_COHESION_RANGE, BOIDS_SEPARATION_RANGE))
+        .insert_resource(GroupsTargets::default())
         .add_event::<ApplyForceEvent>()
         .add_systems(Startup, spawn_boids)
         .add_systems(Update, flocking)

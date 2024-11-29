@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy_egui::*;
-use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 
 use crate::boids_2d::resources::BoidSettings;
 
@@ -32,6 +31,8 @@ pub fn setup_ui(
         ui.add(egui::Slider::new(min_distance_between_boids, 0.0..=50.0).text("Minimum distance between boids"));
         let collision_coeff = &mut boid_settings.collision_coeff;
         ui.add(egui::Slider::new(collision_coeff, 0.0..=50.0).text("Collision"));
+        let attraction_coeff = &mut boid_settings.attraction_coeff;
+        ui.add(egui::Slider::new(attraction_coeff, 0.0..=100.0).text("Attraction to target"));
     });
 }
 
