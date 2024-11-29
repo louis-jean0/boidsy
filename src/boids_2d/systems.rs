@@ -187,20 +187,34 @@ pub fn confine_movement (
     let x_max = window.width() - half_sprite_size;
     let y_max = window.height() - half_sprite_size;
     for (mut position, mut velocity, _) in boid_query.iter_mut() {
+        // if boid_settings.bounce_against_walls {
+        //     if position.position.x > x_max {
+        //         position.position.x = x_max;
+        //         rebond(&mut velocity, Vec2::new(-1.0,0.0));
+        //     } else if position.position.x < x_min {
+        //         position.position.x = x_min;
+        //         rebond(&mut velocity, Vec2::new(1.0,0.0));
+        //     }
+        //     if position.position.y > y_max {
+        //         position.position.y = y_max;
+        //         rebond(&mut velocity, Vec2::new(0.0,-1.0));
+        //     } else if position.position.y < y_min {
+        //         position.position.y = y_min;
+        //         rebond(&mut velocity, Vec2::new(0.0,1.0));
+        //     }
+        // }
         if boid_settings.bounce_against_walls {
-            if position.position.x > x_max {
-                position.position.x = x_max;
-                rebond(&mut velocity, Vec2::new(-1.0,0.0));
-            } else if position.position.x < x_min {
-                position.position.x = x_min;
-                rebond(&mut velocity, Vec2::new(1.0,0.0));
+            let turn_factor: f32 = 50.0;
+            let margin = 100.0;
+            if position.position.x > x_max - margin {
+                velocity.velocity.x -= turn_factor;
+            } else if position.position.x < x_min + margin {
+                velocity.velocity.x += turn_factor;
             }
-            if position.position.y > y_max {
-                position.position.y = y_max;
-                rebond(&mut velocity, Vec2::new(0.0,-1.0));
-            } else if position.position.y < y_min {
-                position.position.y = y_min;
-                rebond(&mut velocity, Vec2::new(0.0,1.0));
+            if position.position.y > y_max - margin {
+                velocity.velocity.y -= turn_factor;
+            } else if position.position.y < y_min + margin {
+                velocity.velocity.y += turn_factor;
             }
         }
         else {
@@ -216,19 +230,6 @@ pub fn confine_movement (
             }
         }
     }
-}
-
-pub fn rebond(velocity: &mut Velocity, normal: Vec2) {
-    let angle_max: f32 = 45.0 * (std::f32::consts::PI / 180.0);
-    let dot_velocity_normal = velocity.velocity.dot(normal);
-    let reflection: Vec2 = velocity.velocity - 2.0 * dot_velocity_normal * normal;
-    let angle = reflection.y.atan2(reflection.x);
-    let mut rng = rand::thread_rng();
-    let variation: f32 = rng.gen_range(-angle_max..angle_max);
-    let new_angle = angle + variation;
-    let magnitude = reflection.length();
-    let new_velocity = Vec2::new(magnitude * f32::cos(new_angle), magnitude * f32::sin(new_angle));
-    velocity.velocity = new_velocity;
 }
 
 pub fn adjust_population(
