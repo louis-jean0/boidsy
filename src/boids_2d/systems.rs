@@ -77,7 +77,7 @@ pub fn flocking(
             if entity == other_entity /*|| boid.group != other_boid.group*/ {
                 continue;
             }
-            let distance = position.position.abs().distance(other_position.position.abs());
+            let distance = position.position.distance(other_position.position);
             if distance < separation_range {
                 repulsion_neighbors.push((other_position, distance));
             }
@@ -178,6 +178,12 @@ pub fn update_boid_position(
         let rotation_angle = velocity.velocity.y.atan2(velocity.velocity.x);
         transform.rotation = Quat::from_rotation_z(rotation_angle);
     }
+}
+
+pub fn is_in_field_of_view(position: &Position, velocity: &Velocity, other_position: &Position, fov: &f32) -> bool {
+    //let to_other = other_position - position;
+    //let distance;
+    false
 }
 
 pub fn confine_movement (

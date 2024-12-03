@@ -15,7 +15,8 @@ pub struct BoidSettings {
     pub min_speed: f32,
     pub max_speed: f32,
     pub bounce_against_walls: bool,
-    pub attraction_coeff: f32
+    pub attraction_coeff: f32,
+    pub field_of_view: f32
 }
 
 impl Default for BoidSettings {
@@ -23,18 +24,19 @@ impl Default for BoidSettings {
         BoidSettings {
             count: 500,
             previous_count: 500,
-            alignment_range: 100.0,
-            cohesion_range: 50.0,
+            alignment_range: 30.0,
+            cohesion_range: 10.0,
             separation_range: 20.0,
-            min_distance_between_boids: 16.0,
+            min_distance_between_boids: 20.0,
             cohesion_coeff: 20.0,
-            alignment_coeff: 30.0,
+            alignment_coeff: 5.0,
             separation_coeff: 20.0,
-            collision_coeff: 40.0,
-            min_speed: 200.0,
-            max_speed: 500.0,
-            bounce_against_walls: false,
-            attraction_coeff: 10.0
+            collision_coeff: 24.0,
+            min_speed: 500.0,
+            max_speed: 1000.0,
+            bounce_against_walls: true,
+            attraction_coeff: 1.0,
+            field_of_view: 90.0
         }
     }
 }
