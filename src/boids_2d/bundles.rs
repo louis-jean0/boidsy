@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use crate::boids_2d::components::*;
+use bevy::sprite::MaterialMesh2dBundle;
 
 #[derive(Bundle)]
 pub struct BoidBundle {
@@ -13,5 +14,7 @@ pub struct BoidBundle {
 #[derive(Bundle)]
 pub struct ObstacleBundle {
     pub position: Position,
+    pub material_mesh: MaterialMesh2dBundle<ColorMaterial>,
 }
+
 

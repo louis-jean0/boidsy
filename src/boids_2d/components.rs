@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::sprite::MaterialMesh2dBundle;
 
 #[derive(Component, Debug)]
 pub struct Boid {
