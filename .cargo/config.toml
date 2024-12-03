@@ -1,2 +1,8 @@
 [env]
 WGPU_BACKEND = "vulkan"
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.dev]
+opt-level = 1
