@@ -9,3 +9,9 @@ pub struct BoidBundle {
     pub acceleration: Acceleration,
     pub sprite_bundle: SpriteBundle
 }
+
+#[derive(Bundle)]
+pub struct ObstacleBundle {
+    pub position: Position,
+}
+

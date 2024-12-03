@@ -7,9 +7,12 @@ mod ui;
 mod input;
 use boids_2d::Boids2DPlugin;
 use input::InputPlugin;
+use ui::UiPlugin;
 
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
+
+
 
 fn main() {
     App::new()
@@ -25,8 +28,7 @@ fn main() {
     .add_plugins(EguiPlugin)
     .add_systems(Startup, spawn_camera)
     .add_plugins(Boids2DPlugin)
-    .add_plugins(InputPlugin)
-    .add_systems(Update, ui::setup_ui)
+    .add_plugins(UiPlugin)
     .run();
 }
 
