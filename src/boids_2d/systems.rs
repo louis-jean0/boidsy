@@ -5,7 +5,7 @@ use crate::boids_2d::components::*;
 use crate::boids_2d::resources::*;
 use crate::boids_2d::bundles::*;
 use crate::boids_2d::events::*;
-
+use crate::kd_tree_2d::components::*;
 
 pub const SPRITE_SIZE: f32 = 32.0;
 
@@ -19,7 +19,6 @@ pub fn spawn_boid_entity(
     let random_x: f32 = rng.gen_range(0.0..window.width());
     let random_y: f32 = rng.gen_range(0.0..window.height());
     let random_group: u8 = rng.gen_range(0..2);
-    println!("{}", random_group);
     let random_angle: f32 = rng.gen_range(0.0..1.0) * 360.0 * (std::f32::consts::PI / 180.0); // En radians
     commands.spawn(
         BoidBundle {
@@ -43,7 +42,8 @@ pub fn spawn_boid_entity(
                 },
                 texture: asset_server.load(texture_path),
                 ..default()
-            }
+            },
+            tracked_by_kdtree: TrackedByKDTree
         }
     );
 }
@@ -82,12 +82,11 @@ pub fn flocking(
             if distance < separation_range {
                 repulsion_neighbors.push((other_position, distance));
             }
-            else if distance < cohesion_range {
-                cohesion_neighbors.push(other_position);
-                
-            }
             else if distance < alignment_range {
                 alignment_neighbors.push(other_velocity);
+            }
+            else if distance < cohesion_range {
+                cohesion_neighbors.push(other_position);
             }
         }
         let cohesion_force: Vec2 = cohesion(position, &cohesion_neighbors, &boid_settings.cohesion_coeff);
@@ -101,6 +100,10 @@ pub fn flocking(
             force: total_force
         });
     }
+}
+
+pub fn get_neighbors_in_radius(kd_tree: Res<NNTree>) -> Vec<(Entity, &Position, &Velocity)> {
+    
 }
 
 pub fn cohesion(position: &Position, cohesion_neighbors: &Vec<&Position>, cohesion_coeff: &f32) -> Vec2 {
@@ -182,8 +185,8 @@ pub fn update_boid_position(
 }
 
 pub fn is_in_field_of_view(position: &Position, velocity: &Velocity, other_position: &Position, fov: &f32) -> bool {
-    //let to_other = other_position - position;
-    //let distance;
+    let to_other = other_position.position - position.position;
+    let distance = to_other.length();
     false
 }
 
@@ -288,5 +291,5 @@ pub fn spawn_obstacles_system(
     asset_server: Res<AssetServer>,
 ) {
     // Exemple : Créer un obstacle à la position (200, 300) avec une taille de 50
-    spawn_obstacle(&mut commands, Vec2::new(200.0, 300.0), 50.0, &asset_server);
+    //spawn_obstacle(&mut commands, Vec2::new(200.0, 300.0), 50.0, &asset_server);
 }

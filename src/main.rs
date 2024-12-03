@@ -5,9 +5,11 @@ use bevy_egui::*;
 mod boids_2d;
 mod ui;
 mod input;
+mod kd_tree_2d;
 use boids_2d::Boids2DPlugin;
 use input::InputPlugin;
 use ui::UiPlugin;
+use kd_tree_2d::KDTreePlugin;
 
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
