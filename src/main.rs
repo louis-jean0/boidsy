@@ -29,6 +29,7 @@ fn main() {
     .add_systems(Startup, spawn_camera)
     .add_plugins(Boids2DPlugin)
     .add_plugins(UiPlugin)
+    .add_plugins(InputPlugin)
     .run();
 }
 

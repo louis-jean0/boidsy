@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 pub mod components;
-mod systems;
+pub mod systems;
 pub mod resources;
 pub mod bundles;
 pub mod events;
@@ -23,7 +23,7 @@ impl Plugin for Boids2DPlugin {
         .insert_resource(GroupsTargets::default())
         .add_event::<ApplyForceEvent>()
         .add_systems(Startup, spawn_boids)
-        .add_systems(Startup, spawn_obstacles_system)
+        //.add_systems(Startup, spawn_obstacles_system)
         .add_systems(Update, flocking)
         .add_systems(Update, apply_forces_system)
         .add_systems(Update, update_boid_position)

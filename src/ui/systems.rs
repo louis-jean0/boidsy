@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_egui::*;
 
 use crate::boids_2d::resources::BoidSettings;
+use crate::input::resources::ShapeSettings;
 
 //fps
 use bevy::diagnostic::DiagnosticsStore;
@@ -15,7 +16,8 @@ pub struct FpsText;
 
 pub fn setup_ui(
     mut egui_context: EguiContexts,
-    mut boid_settings: ResMut<BoidSettings>) {
+    mut boid_settings: ResMut<BoidSettings>,
+    mut shape_settings: ResMut<ShapeSettings>) {
     egui::Window::new("Boids settings").show(egui_context.ctx_mut(), |ui| {
         let bounce = &mut boid_settings.bounce_against_walls;
         ui.checkbox(bounce, "Boids bounce against walls");
@@ -43,6 +45,8 @@ pub fn setup_ui(
         ui.add(egui::Slider::new(collision_coeff, 0.0..=50.0).text("Collision"));
         let attraction_coeff = &mut boid_settings.attraction_coeff;
         ui.add(egui::Slider::new(attraction_coeff, 0.0..=100.0).text("Attraction to target"));
+        let radius = &mut shape_settings.radius;
+        ui.add(egui::Slider::new(radius,1.0..=100.0).text("Radius of obstacles"))
     });
 }
 
