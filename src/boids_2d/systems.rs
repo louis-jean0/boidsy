@@ -295,6 +295,18 @@ pub fn spawn_obstacle(
     });
 }
 
+pub fn delete_obstacles(
+    commands: &mut Commands,
+    query: Query<Entity, (With<Position>, With<ColorMaterial>)>, // Query pour les entités Obstacle
+) {
+    // Itérer sur chaque entité correspondant au composant `Obstacle`
+    for entity in query.iter() {
+        commands.entity(entity).despawn(); // Supprimer l'entité
+    }
+}
+
+
+
 
 pub fn spawn_obstacles_system(
     mut commands: Commands,

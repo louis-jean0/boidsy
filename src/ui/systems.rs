@@ -46,7 +46,8 @@ pub fn setup_ui(
         let attraction_coeff = &mut boid_settings.attraction_coeff;
         ui.add(egui::Slider::new(attraction_coeff, 0.0..=100.0).text("Attraction to target"));
         let radius = &mut shape_settings.radius;
-        ui.add(egui::Slider::new(radius,1.0..=100.0).text("Radius of obstacles"))
+        ui.add(egui::Slider::new(radius,1.0..=100.0).text("Radius of obstacles"));
+        ui.label("R to remove all obstacles");
     });
 }
 
