@@ -11,6 +11,10 @@ use bevy::sprite::MaterialMesh2dBundle;
 
 pub const SPRITE_SIZE: f32 = 32.0;
 
+#[derive(Component)]
+pub struct ObstacleTag;
+
+
 pub fn spawn_boid_entity(
     commands: &mut Commands,
     window: &Window,
@@ -267,8 +271,8 @@ pub fn spawn_obstacle(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<ColorMaterial>>,
 ) {
-    let mesh = meshes.add(Mesh::from(shape::Circle::new(radius))); // Crée un cercle
-        // meshes.add(CircularSector::new(50.0, 1.0)),
+    let mesh = meshes.add(Mesh::from(shape::Circle::new(radius)));
+            // meshes.add(CircularSector::new(50.0, 1.0)),
         // meshes.add(CircularSegment::new(50.0, 1.25)),
         // meshes.add(Ellipse::new(25.0, 50.0)),
         // meshes.add(Annulus::new(25.0, 50.0)),
@@ -281,29 +285,29 @@ pub fn spawn_obstacle(
         //     Vec2::new(-50.0, -50.0),
         //     Vec2::new(50.0, -50.0),
         // )),
+    let material = materials.add(Color::rgb(color.x, color.y, color.z).into());
 
-    let material = materials.add(Color::rgb(color.x, color.y, color.z).into()); // Couleur rouge
-
-    commands.spawn(ObstacleBundle {
-        position: Position { position },
-        material_mesh: MaterialMesh2dBundle {
-            mesh: mesh.into(),
-            material,
-            transform: Transform::from_xyz(position.x, position.y, 1.0),
-            ..default()
+    commands.spawn((
+        ObstacleBundle {
+            position: Position { position },
+            material_mesh: MaterialMesh2dBundle {
+                mesh: mesh.into(),
+                material,
+                transform: Transform::from_xyz(position.x, position.y, 1.0),
+                ..default()
+            },
         },
-    });
+        ObstacleTag, // Ajout du tag pour marquer l'entité comme obstacle
+    ));
 }
 
-pub fn delete_obstacles(
-    commands: &mut Commands,
-    query: Query<Entity, (With<Position>, With<ColorMaterial>)>, // Query pour les entités Obstacle
-) {
-    // Itérer sur chaque entité correspondant au composant `Obstacle`
+
+pub fn remove_all_obstacles(mut commands: Commands, query: Query<Entity, With<ObstacleTag>>) {
     for entity in query.iter() {
-        commands.entity(entity).despawn(); // Supprimer l'entité
+        commands.entity(entity).despawn();
     }
 }
+
 
 
 

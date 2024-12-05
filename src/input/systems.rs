@@ -18,7 +18,7 @@ pub fn mouse_buttons_input(
     q_windows: Query<&Window, With<PrimaryWindow>>,
     shape_settings: Res<ShapeSettings>,
     keys: Res<Input<KeyCode>>,
-    query: Query<Entity, (With<Position>, With<ColorMaterial>)>, // Ajout pour accéder aux obstacles
+    query: Query<Entity, With<ObstacleTag>>, // Ajout pour accéder aux obstacles
 ) {
     if mouse_buttons.pressed(MouseButton::Right) {
         if let Some(position) = cursor_position(&q_windows) {
@@ -36,7 +36,7 @@ pub fn mouse_buttons_input(
 
     if keys.just_pressed(KeyCode::R) {
         println!("R pressed");
-        delete_obstacles(&mut commands, &query); // Appel de delete_obstacles ici
+        remove_all_obstacles(commands, query);
     }
 }
 
