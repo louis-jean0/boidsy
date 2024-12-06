@@ -1,10 +1,12 @@
 use bevy::prelude::*;
+use bevy::render::render_resource::Texture;
 use crate::boids_2d::components::*;
 use crate::kd_tree_2d::components::*;
+
 #[derive(Bundle)]
 pub struct BoidBundle {
     pub boid: Boid,
-    pub position: Position,
+    //pub transform: Transform,
     pub velocity: Velocity,
     pub acceleration: Acceleration,
     pub sprite_bundle: SpriteBundle,
@@ -13,6 +15,6 @@ pub struct BoidBundle {
 
 #[derive(Bundle)]
 pub struct ObstacleBundle {
-    pub position: Position,
+    pub transform: Transform,
 }
 

@@ -3,7 +3,6 @@ use bevy::utils::Duration;
 use bevy_spatial::{AutomaticUpdate, SpatialStructure, TransformMode};
 use components::TrackedByKDTree;
 
-use crate::boids_2d::components::Position;
 pub mod components;
 
 pub struct KDTreePlugin;

@@ -6,11 +6,6 @@ pub struct Boid {
 }
 
 #[derive(Component, Debug)]
-pub struct Position {
-    pub position: Vec2
-}
-
-#[derive(Component, Debug)]
 pub struct Velocity {
     pub velocity: Vec2
 }

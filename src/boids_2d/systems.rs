@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy::render::render_resource::Texture;
+use bevy::transform;
 use bevy::window::PrimaryWindow;
 use bevy_spatial::SpatialAccess;
 use rand::prelude::*;
@@ -26,9 +28,10 @@ pub fn spawn_boid_entity(
             boid: Boid {
                 group: random_group
             },
-            position: Position {
-                position: Vec2::new(random_x, random_y)
-            },
+            // transform: Transform {
+            //     translation: Vec3::new(random_x, random_y, 0.0),
+            //     ..default()
+            // },
             velocity: Velocity {
                 velocity: Vec2::new(f32::cos(random_angle), f32::sin(random_angle))
             },
@@ -38,7 +41,6 @@ pub fn spawn_boid_entity(
             sprite_bundle: SpriteBundle {
                 transform: Transform {
                     translation: Vec3::new(random_x, random_y, 0.0),
-                    rotation: Quat::IDENTITY,
                     ..default()
                 },
                 texture: asset_server.load(texture_path),
@@ -62,7 +64,7 @@ pub fn spawn_boids(
 }
 
 pub fn flocking(
-    boid_query: Query<(Entity, &Position, &Velocity, &Boid)>,
+    boid_query: Query<(Entity, &Transform, &Velocity, &Boid)>,
     mut event_writer: EventWriter<ApplyForceEvent>,
     boid_settings: Res<BoidSettings>,
     groups_targets: Res<GroupsTargets>,
@@ -72,31 +74,33 @@ pub fn flocking(
     let alignment_range = boid_settings.alignment_range;
     let separation_range = boid_settings.separation_range;
 
-    for(entity, position, velocity, boid) in boid_query.iter() {
+    for(entity, transform, velocity, boid) in boid_query.iter() {
+        let position = transform.translation.truncate();
         let mut cohesion_neighbors: Vec<Vec2> = Vec::new();
         let mut repulsion_neighbors: Vec<(Vec2, f32)> = Vec::new();
         let mut alignment_neighbors: Vec<Vec2> = Vec::new();
-        for (_, neighbor_entity) in kd_tree.within_distance(position.position, cohesion_range) {
+        for (_, neighbor_entity) in kd_tree.within_distance(position, cohesion_range) {
             if let Some(neighbor_entity) = neighbor_entity {
-                if let Ok((_, neighbor_position, neighbor_velocity, _)) = boid_query.get(neighbor_entity) {
-                    let distance = position.position.distance(neighbor_position.position);
+                if let Ok((_, neighbor_transform, neighbor_velocity, _)) = boid_query.get(neighbor_entity) {
+                    let neighbor_position = neighbor_transform.translation.truncate();
+                    let distance = position.distance(neighbor_position);
                     if distance < separation_range {
-                        repulsion_neighbors.push((neighbor_position.position, distance));
+                        repulsion_neighbors.push((neighbor_position, distance));
                     } else if distance < alignment_range {
                         alignment_neighbors.push(neighbor_velocity.velocity);
                     } else if distance < cohesion_range {
-                        cohesion_neighbors.push(neighbor_position.position);
+                        cohesion_neighbors.push(neighbor_position);
                     }
                 } else {
                     warn!("Could not fetch components for entity {:?}", neighbor_entity);
                 }
             }
         }  
-        let cohesion_force: Vec2 = cohesion(position, &cohesion_neighbors, &boid_settings.cohesion_coeff);
-        let avoidance_force: Vec2 = avoidance(position, &repulsion_neighbors, &boid_settings.separation_coeff, &boid_settings.min_distance_between_boids, &boid_settings.collision_coeff);
+        let cohesion_force: Vec2 = cohesion(&position, &cohesion_neighbors, &boid_settings.cohesion_coeff);
+        let avoidance_force: Vec2 = avoidance(&position, &repulsion_neighbors, &boid_settings.separation_coeff, &boid_settings.min_distance_between_boids, &boid_settings.collision_coeff);
         let alignment_force: Vec2 = alignment(&velocity, &alignment_neighbors, &boid_settings.alignment_coeff);
         let target = groups_targets.targets[boid.group as usize];
-        let attraction_force: Vec2 = attraction_to_target(position, &target, &boid_settings.attraction_coeff);
+        let attraction_force: Vec2 = attraction_to_target(&position, &target, &boid_settings.attraction_coeff);
         let total_force = cohesion_force + avoidance_force + alignment_force + attraction_force;
         event_writer.send(ApplyForceEvent {
             entity: entity,
@@ -119,7 +123,7 @@ pub fn flocking(
 //     })
 // }
 
-pub fn cohesion(position: &Position, cohesion_neighbors: &Vec<Vec2>, cohesion_coeff: &f32) -> Vec2 {
+pub fn cohesion(position: &Vec2, cohesion_neighbors: &Vec<Vec2>, cohesion_coeff: &f32) -> Vec2 {
     let mut cohesion_force: Vec2 = Vec2::ZERO;
     let nb_neighbors = cohesion_neighbors.len();
     if nb_neighbors == 0 {
@@ -129,19 +133,19 @@ pub fn cohesion(position: &Position, cohesion_neighbors: &Vec<Vec2>, cohesion_co
         cohesion_force += *other_position;
     }
     cohesion_force /= nb_neighbors as f32;
-    cohesion_force = cohesion_force - position.position;
+    cohesion_force = cohesion_force - *position;
     cohesion_force * *cohesion_coeff
 }
 
-pub fn avoidance(position: &Position, repulsion_neighbors: &Vec<(Vec2, f32)>, separation_coeff: &f32, min_distance_between_boids: &f32, collision_coeff: &f32) -> Vec2 {
+pub fn avoidance(position: &Vec2, repulsion_neighbors: &Vec<(Vec2, f32)>, separation_coeff: &f32, min_distance_between_boids: &f32, collision_coeff: &f32) -> Vec2 {
     let mut avoidance_force: Vec2 = Vec2::ZERO;
     for (other_position, distance) in repulsion_neighbors.iter() {
         if distance < min_distance_between_boids {
             let interpolation_factor = (*min_distance_between_boids - distance) / *min_distance_between_boids;
-            avoidance_force += (position.position - *other_position) * *collision_coeff * interpolation_factor;
+            avoidance_force += (*position - *other_position) * *collision_coeff * interpolation_factor;
         }
         else {
-            avoidance_force += position.position - *other_position;
+            avoidance_force += *position - *other_position;
         }
     }
     avoidance_force * *separation_coeff
@@ -161,8 +165,8 @@ pub fn alignment(velocity: &Velocity, alignment_neighbors: &Vec<Vec2>, alignment
     alignment_force * *alignment_coeff
 }
 
-pub fn attraction_to_target(position: &Position, target: &Vec2, attraction_coeff: &f32) -> Vec2 {
-    (*target - position.position) * *attraction_coeff
+pub fn attraction_to_target(position: &Vec2, target: &Vec2, attraction_coeff: &f32) -> Vec2 {
+    (*target - *position) * *attraction_coeff
 }
 
 pub fn apply_forces_system(
@@ -177,11 +181,11 @@ pub fn apply_forces_system(
 }
 
 pub fn update_boid_position(
-    mut boid_query: Query<(&mut Position, &mut Velocity, &mut Acceleration, &mut Transform), With<Boid>>,
+    mut boid_query: Query<(&mut Transform, &mut Velocity, &mut Acceleration), With<Boid>>,
     boid_settings: Res<BoidSettings>,
     time: Res<Time>
 ) {
-    for(mut position, mut velocity, mut acceleration, mut transform) in boid_query.iter_mut() {
+    for(mut transform, mut velocity, mut acceleration) in boid_query.iter_mut() {
         velocity.velocity += acceleration.acceleration * time.delta_seconds();
         if velocity.velocity.length() < boid_settings.min_speed {
             velocity.velocity = velocity.velocity.normalize() * boid_settings.min_speed;
@@ -189,22 +193,21 @@ pub fn update_boid_position(
         if velocity.velocity.length() > boid_settings.max_speed {
             velocity.velocity = velocity.velocity.normalize() * boid_settings.max_speed;
         }
-        position.position += velocity.velocity * time.delta_seconds();
-        transform.translation = Vec3::new(position.position.x, position.position.y, 0.0); // Pour faire bouger le sprite en lui-même
+        transform.translation += Vec3::new(velocity.velocity.x, velocity.velocity.y, 0.0) * time.delta_seconds();
         acceleration.acceleration = Vec2::ZERO;
         let rotation_angle = velocity.velocity.y.atan2(velocity.velocity.x);
         transform.rotation = Quat::from_rotation_z(rotation_angle);
     }
 }
 
-pub fn is_in_field_of_view(position: &Position, velocity: &Velocity, other_position: &Position, fov: &f32) -> bool {
-    let to_other = other_position.position - position.position;
+pub fn is_in_field_of_view(position: &Vec2, velocity: &Velocity, other_position: &Vec2, fov: &f32) -> bool {
+    let to_other = *other_position - *position;
     let distance = to_other.length();
     false
 }
 
 pub fn confine_movement (
-    mut boid_query: Query<(&mut Position, &mut Velocity, &mut Acceleration), With<Boid>>,
+    mut boid_query: Query<(&mut Transform, &mut Velocity, &mut Acceleration), With<Boid>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     boid_settings: Res<BoidSettings>
 ) {
@@ -214,33 +217,33 @@ pub fn confine_movement (
     let y_min = 0.0 + half_sprite_size;
     let x_max = window.width() - half_sprite_size;
     let y_max = window.height() - half_sprite_size;
-    for (mut position, mut velocity, _) in boid_query.iter_mut() {
+    for (mut transform, mut velocity, _) in boid_query.iter_mut() {
         if boid_settings.bounce_against_walls {
             let turn_factor: f32 = 20.0;
             let margin = 100.0;
-            if position.position.x > x_max - margin {
+            if transform.translation.x > x_max - margin {
                 velocity.velocity.x -= turn_factor;
             }
-            if position.position.x < x_min + margin {
+            if transform.translation.x < x_min + margin {
                 velocity.velocity.x += turn_factor;
             }
-            if position.position.y > y_max - margin {
+            if transform.translation.y > y_max - margin {
                 velocity.velocity.y -= turn_factor;
             }
-            if position.position.y < y_min + margin {
+            if transform.translation.y < y_min + margin {
                 velocity.velocity.y += turn_factor;
             }
         }
         else {
-            if position.position.x > x_max {
-                position.position.x = x_min;
-            } else if position.position.x < x_min {
-                position.position.x = x_max;
+            if transform.translation.x > x_max {
+                transform.translation.x = x_min;
+            } else if transform.translation.x < x_min {
+                transform.translation.x = x_max;
             }
-            if position.position.y > y_max {
-                position.position.y = y_min;
-            } else if position.position.y < y_min {
-                position.position.y = y_max;
+            if transform.translation.y > y_max {
+                transform.translation.y = y_min;
+            } else if transform.translation.y < y_min {
+                transform.translation.y = y_max;
             }
         }
     }
@@ -285,7 +288,10 @@ pub fn spawn_obstacle(
 
     commands.spawn((
         ObstacleBundle {
-            position: Position { position },
+            transform: Transform {
+                translation: Vec3::new(position.x, position.y, 0.0),
+                ..default()
+            }
         },
         SpriteBundle {
             transform: Transform {
