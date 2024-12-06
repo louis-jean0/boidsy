@@ -20,7 +20,7 @@ pub fn setup_ui(
         let bounce = &mut boid_settings.bounce_against_walls;
         ui.checkbox(bounce, "Boids bounce against walls");
         let boids_count = &mut boid_settings.count;
-        ui.add(egui::Slider::new(boids_count, 0..=2500).text("Boids count"));
+        ui.add(egui::Slider::new(boids_count, 0..=10000).text("Boids count"));
         let min_speed = &mut boid_settings.min_speed;
         ui.add(egui::Slider::new(min_speed, 0.0..=500.0).text("Min speed"));
         let max_speed = &mut boid_settings.max_speed;

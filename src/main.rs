@@ -14,8 +14,6 @@ use kd_tree_2d::KDTreePlugin;
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
 
-
-
 fn main() {
     App::new()
     .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -29,6 +27,7 @@ fn main() {
     }))
     .add_plugins(EguiPlugin)
     .add_systems(Startup, spawn_camera)
+    .add_plugins(KDTreePlugin)
     .add_plugins(Boids2DPlugin)
     .add_plugins(UiPlugin)
     .run();
