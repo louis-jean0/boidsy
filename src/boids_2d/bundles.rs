@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy::render::render_resource::Texture;
 use crate::boids_2d::components::*;
 use crate::kd_tree_2d::components::*;
 

@@ -11,8 +11,8 @@ use resources::*;
 use systems::*;
 
 pub const BOIDS_COUNT: usize = 1800;
+pub const BOIDS_COHESION_RANGE: f32 = 50.0;
 pub const BOIDS_ALIGNMENT_RANGE: f32 = 30.0;
-pub const BOIDS_COHESION_RANGE: f32 = 10.0;
 pub const BOIDS_SEPARATION_RANGE: f32 = 20.0;
 
 pub struct Boids2DPlugin;
