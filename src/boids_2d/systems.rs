@@ -8,9 +8,19 @@ use crate::boids_2d::components::*;
 use crate::boids_2d::resources::*;
 use crate::boids_2d::bundles::*;
 use crate::boids_2d::events::*;
+<<<<<<< HEAD
 use crate::kd_tree_2d::components::*;
+=======
+
+use bevy::sprite::MaterialMesh2dBundle;
+
+>>>>>>> Ben
 
 pub const SPRITE_SIZE: f32 = 32.0;
+
+#[derive(Component)]
+pub struct ObstacleTag;
+
 
 pub fn spawn_boid_entity(
     commands: &mut Commands,
@@ -280,14 +290,30 @@ pub fn adjust_population(
 pub fn spawn_obstacle(
     commands: &mut Commands,
     position: Vec2,
-    size: f32,
-    asset_server: &Res<AssetServer>,
+    color: Vec3,
+    radius: f32,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<ColorMaterial>>,
 ) {
-    // Spécifiez le chemin de la texture circulaire (assurez-vous qu'elle existe)
-    let texture_path = "../assets/circle.png";
+    let mesh = meshes.add(Mesh::from(shape::Circle::new(radius)));
+            // meshes.add(CircularSector::new(50.0, 1.0)),
+        // meshes.add(CircularSegment::new(50.0, 1.25)),
+        // meshes.add(Ellipse::new(25.0, 50.0)),
+        // meshes.add(Annulus::new(25.0, 50.0)),
+        // meshes.add(Capsule2d::new(25.0, 50.0)),
+        // meshes.add(Rhombus::new(75.0, 100.0)),
+        // meshes.add(Rectangle::new(50.0, 100.0)),
+        // meshes.add(RegularPolygon::new(50.0, 6)),
+        // meshes.add(Triangle2d::new(
+        //     Vec2::Y * 50.0,
+        //     Vec2::new(-50.0, -50.0),
+        //     Vec2::new(50.0, -50.0),
+        // )),
+    let material = materials.add(Color::rgb(color.x, color.y, color.z).into());
 
     commands.spawn((
         ObstacleBundle {
+<<<<<<< HEAD
             transform: Transform {
                 translation: Vec3::new(position.x, position.y, 0.0),
                 ..default()
@@ -297,18 +323,45 @@ pub fn spawn_obstacle(
             transform: Transform {
                 translation: Vec3::new(position.x, position.y, 0.0),
                 scale: Vec3::splat(size / SPRITE_SIZE), // Ajuste la taille en fonction du rayon
+=======
+            position: Position { position },
+            material_mesh: MaterialMesh2dBundle {
+                mesh: mesh.into(),
+                material,
+                transform: Transform::from_xyz(position.x, position.y, 1.0),
+>>>>>>> Ben
                 ..default()
             },
-            texture: asset_server.load(texture_path),
-            ..default()
         },
+        ObstacleTag, // Ajout du tag pour marquer l'entité comme obstacle
     ));
 }
 
+
+pub fn remove_all_obstacles(mut commands: Commands, query: Query<Entity, With<ObstacleTag>>) {
+    for entity in query.iter() {
+        commands.entity(entity).despawn();
+    }
+}
+
+
+
+
+
 pub fn spawn_obstacles_system(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+<<<<<<< HEAD
     // Exemple : Créer un obstacle à la position (200, 300) avec une taille de 50
     //spawn_obstacle(&mut commands, Vec2::new(200.0, 300.0), 50.0, &asset_server);
+=======
+    // Exemple : Créer un obstacle à la position (200, 300) avec un rayon de 50
+    spawn_obstacle(&mut commands, Vec2::new(200.0, 300.0), Vec3::new(1.0, 0., 0.), 10.0, &mut meshes, &mut materials);
+    spawn_obstacle(&mut commands, Vec2::new(500.0, 750.0), Vec3::new(0., 1., 0.), 32.0, &mut meshes, &mut materials);
+    spawn_obstacle(&mut commands, Vec2::new(900.0, 100.0), Vec3::new(0., 0., 1.), 50.0, &mut meshes, &mut materials);
+>>>>>>> Ben
 }
+
+

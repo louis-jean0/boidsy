@@ -30,6 +30,7 @@ fn main() {
     .add_plugins(KDTreePlugin)
     .add_plugins(Boids2DPlugin)
     .add_plugins(UiPlugin)
+    .add_plugins(InputPlugin)
     .run();
 }
 
