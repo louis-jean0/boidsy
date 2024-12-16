@@ -1,10 +1,7 @@
 use bevy::prelude::*;
 use crate::boids_2d::components::*;
-<<<<<<< HEAD
-use crate::kd_tree_2d::components::*;
-=======
 use bevy::sprite::MaterialMesh2dBundle;
->>>>>>> Ben
+use crate::kd_tree_2d::components::*;
 
 #[derive(Bundle)]
 pub struct BoidBundle {
@@ -18,12 +15,5 @@ pub struct BoidBundle {
 
 #[derive(Bundle)]
 pub struct ObstacleBundle {
-<<<<<<< HEAD
-    pub transform: Transform,
-=======
-    pub position: Position,
     pub material_mesh: MaterialMesh2dBundle<ColorMaterial>,
->>>>>>> Ben
 }
-
-

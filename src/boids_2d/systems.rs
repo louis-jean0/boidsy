@@ -1,6 +1,4 @@
 use bevy::prelude::*;
-use bevy::render::render_resource::Texture;
-use bevy::transform;
 use bevy::window::PrimaryWindow;
 use bevy_spatial::SpatialAccess;
 use rand::prelude::*;
@@ -8,13 +6,9 @@ use crate::boids_2d::components::*;
 use crate::boids_2d::resources::*;
 use crate::boids_2d::bundles::*;
 use crate::boids_2d::events::*;
-<<<<<<< HEAD
-use crate::kd_tree_2d::components::*;
-=======
 
 use bevy::sprite::MaterialMesh2dBundle;
-
->>>>>>> Ben
+use crate::kd_tree_2d::components::*;
 
 pub const SPRITE_SIZE: f32 = 32.0;
 
@@ -74,7 +68,7 @@ pub fn spawn_boids(
 }
 
 pub fn flocking(
-    boid_query: Query<(Entity, &Transform, &Velocity, &Boid)>,
+    boid_query: Query<(Entity, &Transform, &Velocity, &Boid), With<Boid>>,
     mut event_writer: EventWriter<ApplyForceEvent>,
     boid_settings: Res<BoidSettings>,
     groups_targets: Res<GroupsTargets>,
@@ -93,13 +87,14 @@ pub fn flocking(
             if let Some(neighbor_entity) = neighbor_entity {
                 if let Ok((_, neighbor_transform, neighbor_velocity, _)) = boid_query.get(neighbor_entity) {
                     let neighbor_position = neighbor_transform.translation.truncate();
-                    let distance = position.distance(neighbor_position);
-                    if distance < separation_range {
-                        repulsion_neighbors.push((neighbor_position, distance));
-                    } else if distance < alignment_range {
-                        alignment_neighbors.push(neighbor_velocity.velocity);
-                    } else if distance < cohesion_range {
-                        cohesion_neighbors.push(neighbor_position);
+                    if let Some(distance) = is_in_field_of_view(&position, &neighbor_position, &boid_settings.field_of_view, &boid_settings.cohesion_range) {
+                        if distance < separation_range {
+                            repulsion_neighbors.push((neighbor_position, distance));
+                        } else if distance < alignment_range {
+                            alignment_neighbors.push(neighbor_velocity.velocity);
+                        } else if distance < cohesion_range {
+                            cohesion_neighbors.push(neighbor_position);
+                        }
                     }
                 } else {
                     warn!("Could not fetch components for entity {:?}", neighbor_entity);
@@ -118,20 +113,6 @@ pub fn flocking(
         });
     }
 }
-
-// pub fn get_neighbors_in_radius<'a>(
-//     position: &Position,
-//     cohesion_range: f32,
-//     kd_tree: Res<NNTree>,
-//     boid_query: Query<(Entity, &'a Position, &'a Velocity), With<Boid>>) -> Vec<(Entity, &'a Position, &'a Velocity)>
-// {
-
-//     let results = kd_tree.within_distance(position.position, cohesion_range);
-//     results.into_iter()
-//     .filter_map(|result| {
-
-//     })
-// }
 
 pub fn cohesion(position: &Vec2, cohesion_neighbors: &Vec<Vec2>, cohesion_coeff: &f32) -> Vec2 {
     let mut cohesion_force: Vec2 = Vec2::ZERO;
@@ -210,10 +191,16 @@ pub fn update_boid_position(
     }
 }
 
-pub fn is_in_field_of_view(position: &Vec2, velocity: &Velocity, other_position: &Vec2, fov: &f32) -> bool {
+pub fn is_in_field_of_view(position: &Vec2, other_position: &Vec2, fov: &f32, cohesion_range: &f32) -> Option<f32> {
     let to_other = *other_position - *position;
-    let distance = to_other.length();
-    false
+    let angle_between_the_two = position.angle_between(*other_position);
+    if angle_between_the_two <= *fov {
+        let distance = to_other.length();
+        if distance < *cohesion_range {
+            return Some(distance)
+        }
+    }
+    None
 }
 
 pub fn confine_movement (
@@ -313,55 +300,19 @@ pub fn spawn_obstacle(
 
     commands.spawn((
         ObstacleBundle {
-<<<<<<< HEAD
-            transform: Transform {
-                translation: Vec3::new(position.x, position.y, 0.0),
-                ..default()
-            }
-        },
-        SpriteBundle {
-            transform: Transform {
-                translation: Vec3::new(position.x, position.y, 0.0),
-                scale: Vec3::splat(size / SPRITE_SIZE), // Ajuste la taille en fonction du rayon
-=======
-            position: Position { position },
             material_mesh: MaterialMesh2dBundle {
                 mesh: mesh.into(),
                 material,
                 transform: Transform::from_xyz(position.x, position.y, 1.0),
->>>>>>> Ben
                 ..default()
             },
         },
-        ObstacleTag, // Ajout du tag pour marquer l'entité comme obstacle
+        ObstacleTag,
     ));
 }
-
 
 pub fn remove_all_obstacles(mut commands: Commands, query: Query<Entity, With<ObstacleTag>>) {
     for entity in query.iter() {
         commands.entity(entity).despawn();
     }
 }
-
-
-
-
-
-pub fn spawn_obstacles_system(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-<<<<<<< HEAD
-    // Exemple : Créer un obstacle à la position (200, 300) avec une taille de 50
-    //spawn_obstacle(&mut commands, Vec2::new(200.0, 300.0), 50.0, &asset_server);
-=======
-    // Exemple : Créer un obstacle à la position (200, 300) avec un rayon de 50
-    spawn_obstacle(&mut commands, Vec2::new(200.0, 300.0), Vec3::new(1.0, 0., 0.), 10.0, &mut meshes, &mut materials);
-    spawn_obstacle(&mut commands, Vec2::new(500.0, 750.0), Vec3::new(0., 1., 0.), 32.0, &mut meshes, &mut materials);
-    spawn_obstacle(&mut commands, Vec2::new(900.0, 100.0), Vec3::new(0., 0., 1.), 50.0, &mut meshes, &mut materials);
->>>>>>> Ben
-}
-
-

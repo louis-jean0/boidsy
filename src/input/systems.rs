@@ -3,12 +3,7 @@ use bevy::window::PrimaryWindow;
 use crate::input::resources::*;
 
 use crate::boids_2d::systems::*;
-use crate::boids_2d::bundles::*;
-use crate::boids_2d::components::*;
 use bevy::input::mouse::MouseWheel;
-
-use bevy::sprite::MaterialMesh2dBundle;
-
 
 pub fn mouse_buttons_input(
     mouse_buttons: Res<Input<MouseButton>>,
@@ -56,14 +51,14 @@ pub fn scroll_events(
     for ev in evr_scroll.read() {
         match ev.unit {
             MouseScrollUnit::Line => {
-            	if(ev.y>0.){
-	            	if(shape_settings.radius < 100.0){
-	            		shape_settings.radius+=1.;
+            	if ev.y > 0.0 {
+	            	if shape_settings.radius < 100.0 {
+	            		shape_settings.radius += 1.0;
 	            	}
 	            }
-            	if(ev.y<0.){
-            		if(shape_settings.radius > 0.0){
-            		shape_settings.radius-=1.;
+            	if ev.y < 0.0 {
+            		if shape_settings.radius > 0.0 {
+            		    shape_settings.radius -= 1.0;
             		}
             	}    
             }
