@@ -21,7 +21,7 @@ pub fn mouse_buttons_input(
             spawn_obstacle(
                 &mut commands,
                 Vec2::new(position.x, window.height() - position.y),
-                Vec3::new(1., 1., 1.),
+                Vec3::new(position.x, position.y, 0.5),
                 shape_settings.radius,
                 &mut meshes,
                 &mut materials,
@@ -34,8 +34,6 @@ pub fn mouse_buttons_input(
         remove_all_obstacles(commands, query);
     }
 }
-
-
 
 pub fn cursor_position(
     q_windows: &Query<&Window, With<PrimaryWindow>>,

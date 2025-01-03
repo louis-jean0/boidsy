@@ -26,7 +26,7 @@ fn main() {
         ..default()
     }))
     .add_plugins(EguiPlugin)
-    .add_systems(Startup, spawn_camera)
+    .add_systems(Startup, spawn_camera_2d)
     .add_plugins(KDTreePlugin)
     .add_plugins(Boids2DPlugin)
     .add_plugins(UiPlugin)
@@ -34,7 +34,7 @@ fn main() {
     .run();
 }
 
-pub fn spawn_camera(
+pub fn spawn_camera_2d(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>
     ) {
@@ -47,4 +47,13 @@ pub fn spawn_camera(
             ..default()
         }
     );
+}
+
+pub fn spawn_camera_3d(
+    mut commands: Commands,
+) {
+    commands.spawn(Camera3dBundle {
+        transform: Transform::from_xyz(0.0, 5.0, 10.0).looking_at(Vec3::ZERO, Vec3::Y),
+        ..default()
+    });
 }

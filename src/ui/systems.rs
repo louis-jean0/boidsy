@@ -27,6 +27,8 @@ pub fn setup_ui(
         ui.add(egui::Slider::new(min_speed, 0.0..=500.0).text("Min speed"));
         let max_speed = &mut boid_settings.max_speed;
         ui.add(egui::Slider::new(max_speed, 0.0..=1000.0).text("Max speed"));
+        let field_of_view = &mut boid_settings.field_of_view;
+        ui.add(egui::Slider::new(field_of_view, 0.0..=360.0).text("Field of view"));
         let cohesion_range = &mut boid_settings.cohesion_range;
         ui.add(egui::Slider::new(cohesion_range, 0.0..=100.0).text("Cohesion range"));
         let max_alignment_range = *cohesion_range;

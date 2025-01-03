@@ -15,9 +15,9 @@ pub const BOIDS_COHESION_RANGE: f32 = 50.0;
 pub const BOIDS_ALIGNMENT_RANGE: f32 = 30.0;
 pub const BOIDS_SEPARATION_RANGE: f32 = 20.0;
 
-pub struct Boids2DPlugin;
+pub struct Boids3DPlugin;
 
-impl Plugin for Boids2DPlugin {
+impl Plugin for Boids3DPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(BoidSettings::new(BOIDS_COUNT,BOIDS_ALIGNMENT_RANGE, BOIDS_COHESION_RANGE, BOIDS_SEPARATION_RANGE))
         .insert_resource(GroupsTargets::default())

@@ -2,18 +2,10 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_spatial::SpatialAccess;
 use rand::prelude::*;
-use crate::boids_2d::components::*;
-use crate::boids_2d::resources::*;
-use crate::boids_2d::bundles::*;
-use crate::boids_2d::events::*;
-
-use bevy::sprite::MaterialMesh2dBundle;
-use crate::kd_tree_2d::components::*;
-
-pub const SPRITE_SIZE: f32 = 32.0;
-
-#[derive(Component)]
-pub struct ObstacleTag;
+use crate::boids_3d::components::*;
+use crate::boids_3d::resources::*;
+use crate::boids_3d::bundles::*;
+use crate::boids_3d::events::*;
 
 pub fn spawn_boid_entity(
     commands: &mut Commands,
@@ -22,8 +14,9 @@ pub fn spawn_boid_entity(
 ) {
     let texture_path = "../assets/fish.png";
     let mut rng = rand::thread_rng();
-    let random_x: f32 = rng.gen_range(0.0..window.width());
-    let random_y: f32 = rng.gen_range(0.0..window.height());
+    let random_x: f32 = rng.gen_range(0.0..100.0);
+    let random_y: f32 = rng.gen_range(0.0..100.0);
+    let random_z: f32 = rng.gen_range(0.0..100.0);
     let random_group: u8 = rng.gen_range(0..2);
     let random_angle: f32 = rng.gen_range(0.0..1.0) * 360.0 * (std::f32::consts::PI / 180.0); // En radians
     commands.spawn(
@@ -36,10 +29,10 @@ pub fn spawn_boid_entity(
             //     ..default()
             // },
             velocity: Velocity {
-                velocity: Vec2::new(f32::cos(random_angle), f32::sin(random_angle))
+                velocity: Vec3::new(f32::cos(random_angle), f32::sin(random_angle), rng.gen_range(-0.5..0.5))
             },
             acceleration: Acceleration {
-                acceleration: Vec2::new(0.0,0.0)
+                acceleration: Vec3::new(0.0,0.0,0.0)
             },
             sprite_bundle: SpriteBundle {
                 transform: Transform {
@@ -285,7 +278,7 @@ pub fn spawn_obstacle(
             // meshes.add(CircularSector::new(50.0, 1.0)),
         // meshes.add(CircularSegment::new(50.0, 1.25)),
         // meshes.add(Ellipse::new(25.0, 50.0)),
-        //meshes.add(Mesh::from(shape::Quad::new(Vec2::new(radius, 0.0))));
+        // meshes.add(Annulus::new(25.0, 50.0)),
         // meshes.add(Capsule2d::new(25.0, 50.0)),
         // meshes.add(Rhombus::new(75.0, 100.0)),
         // meshes.add(Rectangle::new(50.0, 100.0)),
@@ -303,7 +296,7 @@ pub fn spawn_obstacle(
                 mesh: mesh.into(),
                 material,
                 transform: Transform::from_xyz(position.x, position.y, 1.0),
-                ..Default::default()
+                ..default()
             },
         },
         ObstacleTag,
