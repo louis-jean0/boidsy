@@ -20,11 +20,11 @@ pub fn mouse_buttons_input(
             let window = q_windows.get_single().unwrap();
             spawn_obstacle(
                 &mut commands,
-                Vec2::new(position.x, window.height() - position.y),
-                Vec3::new(position.x, position.y, 0.5),
+                Vec2::new(position.x, position.y),
+                Vec3::new(position.x / window.width(), position.y / window.height(), 0.5),
                 shape_settings.radius,
                 &mut meshes,
-                &mut materials,
+                &mut materials
             );
         }
     }
@@ -38,7 +38,11 @@ pub fn mouse_buttons_input(
 pub fn cursor_position(
     q_windows: &Query<&Window, With<PrimaryWindow>>,
 ) -> Option<Vec2> {
-    q_windows.single().cursor_position()
+    if let Some(cursor_pos) = q_windows.single().cursor_position() {
+        Some(Vec2::new(cursor_pos.x, q_windows.get_single().unwrap().height() - cursor_pos.y))
+    } else {
+        None
+    }
 }
 
 pub fn scroll_events(

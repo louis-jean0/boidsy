@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_spatial::SpatialAccess;
 use rand::prelude::*;
+use std::sync::Mutex;
 use crate::boids_2d::components::*;
 use crate::boids_2d::resources::*;
 use crate::boids_2d::bundles::*;
@@ -9,6 +10,8 @@ use crate::boids_2d::events::*;
 
 use bevy::sprite::MaterialMesh2dBundle;
 use crate::kd_tree_2d::components::*;
+use crate::input::resources::ShapeSettings;
+use crate::input::systems::cursor_position;
 
 pub const SPRITE_SIZE: f32 = 32.0;
 
@@ -68,7 +71,7 @@ pub fn spawn_boids(
 
 pub fn flocking(
     boid_query: Query<(Entity, &Transform, &Velocity, &Boid), With<Boid>>,
-    mut event_writer: EventWriter<ApplyForceEvent>,
+    event_writer: EventWriter<ApplyForceEvent>,
     boid_settings: Res<BoidSettings>,
     groups_targets: Res<GroupsTargets>,
     kd_tree: Res<NNTree>
@@ -77,7 +80,9 @@ pub fn flocking(
     let alignment_range = boid_settings.alignment_range;
     let separation_range = boid_settings.separation_range;
 
-    for(entity, transform, velocity, boid) in boid_query.iter() {
+    let event_writer = Mutex::new(event_writer);
+
+    boid_query.par_iter().for_each(|(entity, transform, velocity, boid)| {
         let position = transform.translation.truncate();
         let mut cohesion_neighbors: Vec<Vec2> = Vec::new();
         let mut repulsion_neighbors: Vec<(Vec2, f32)> = Vec::new();
@@ -106,11 +111,12 @@ pub fn flocking(
         let target = groups_targets.targets[boid.group as usize];
         let attraction_force: Vec2 = attraction_to_target(&position, &target, &boid_settings.attraction_coeff);
         let total_force = cohesion_force + avoidance_force + alignment_force + attraction_force;
+        let mut event_writer = event_writer.lock().unwrap();
         event_writer.send(ApplyForceEvent {
             entity: entity,
             force: total_force
         });
-    }
+    });
 }
 
 pub fn cohesion(position: &Vec2, cohesion_neighbors: &Vec<Vec2>, cohesion_coeff: &f32) -> Vec2 {
@@ -159,6 +165,73 @@ pub fn attraction_to_target(position: &Vec2, target: &Vec2, attraction_coeff: &f
     (*target - *position) * *attraction_coeff
 }
 
+pub fn avoid_obstacles(
+    mut boid_query: Query<(Entity, &Transform, &mut Velocity), With<Boid>>,
+    mut event_writer: EventWriter<ApplyForceEvent>,
+    obstacles_query: Query<(&Transform, &ObstacleTag)>,
+    shape_settings: Res<ShapeSettings>
+) {
+    for (entity, transform, mut velocity) in boid_query.iter_mut() {
+        let position = transform.translation.truncate();
+        let mut avoidance_force: Vec2 = Vec2::ZERO;
+        let obstacle_avoidance_range = 50.0;
+        let obstacle_avoidance_coeff = 10.0;
+        let turn_factor: f32 = 20.0;
+        for (obstacle_transform, _) in obstacles_query.iter() {
+            let obstacle_position = obstacle_transform.translation.truncate();
+            let distance = position.distance(obstacle_position) - shape_settings.radius;
+            if distance < obstacle_avoidance_range {
+                let direction = (position - obstacle_position).normalize();
+                let interpolation_factor = (obstacle_avoidance_range - distance) / obstacle_avoidance_range;
+                let force_magnitude = obstacle_avoidance_coeff * interpolation_factor;
+                avoidance_force += direction * force_magnitude;
+                velocity.velocity += direction * turn_factor * interpolation_factor;
+            }
+        }
+        event_writer.send(ApplyForceEvent {
+            entity: entity,
+            force: avoidance_force
+        });
+    }
+}
+
+pub fn scare_with_cursor(
+    mut boid_query: Query<(Entity, &Transform, &mut Velocity), With<Boid>>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    mut event_writer: EventWriter<ApplyForceEvent>,
+    mouse_button_input: Res<Input<MouseButton>>,
+    kd_tree: Res<NNTree>
+) {
+    if mouse_button_input.pressed(MouseButton::Left) {
+        if let Some(cursor_pos) = cursor_position(&window_query) {
+            let fear_range = 100.0;
+            let cursor_radius = 50.0;
+            let fear_coeff = 100000.0;
+            let turn_factor: f32 = 20.0;
+
+            let nearby_boids = kd_tree.within_distance(cursor_pos, fear_range + cursor_radius);
+
+            for (_, entity) in nearby_boids {
+                if let Some(entity) = entity {
+                    if let Ok((_, transform, mut velocity)) = boid_query.get_mut(entity) {
+                        let position = transform.translation.truncate();
+                        let distance = position.distance(cursor_pos) - cursor_radius;
+                        let direction = (position - cursor_pos).normalize();
+                        let interpolation_factor = (fear_range - distance) / fear_range;
+                        let force_magnitude = fear_coeff * interpolation_factor;
+                        let avoidance_force = direction * force_magnitude;
+                        velocity.velocity += direction * turn_factor * interpolation_factor;
+                        event_writer.send(ApplyForceEvent {
+                            entity: entity,
+                            force: avoidance_force,
+                        });
+                    }
+                }
+            }
+        }
+    }
+}
+
 pub fn apply_forces_system(
     mut forces: EventReader<ApplyForceEvent>,
     mut boid_query: Query<&mut Acceleration, With<Boid>>
@@ -190,13 +263,14 @@ pub fn update_boid_position(
     }
 }
 
-pub fn is_in_field_of_view(position: &Vec2, other_position: &Vec2, fov: &f32, cohesion_range: &f32) -> Option<f32> {
+fn is_in_field_of_view(position: &Vec2, other_position: &Vec2, fov: &f32, cohesion_range: &f32) -> Option<f32> {
     let to_other = *other_position - *position;
-    let angle_between_the_two = position.angle_between(*other_position) * (180.0 / std::f32::consts::PI);
-    if angle_between_the_two <= *fov {
-        let distance = to_other.length();
-        if distance < *cohesion_range {
-            return Some(distance)
+    let distance_squared = to_other.length_squared();
+    let cohesion_range_squared = cohesion_range * cohesion_range;
+    if distance_squared < cohesion_range_squared {
+        let angle_between_the_two = position.angle_between(*other_position) * (180.0 / std::f32::consts::PI);
+        if angle_between_the_two <= *fov {
+            return Some(distance_squared.sqrt());
         }
     }
     None

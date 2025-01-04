@@ -25,6 +25,8 @@ impl Plugin for Boids2DPlugin {
         .add_systems(Startup, spawn_boids)
         //.add_systems(Startup, spawn_obstacles_system)
         .add_systems(Update, flocking)
+        .add_systems(Update, avoid_obstacles)
+        .add_systems(Update, scare_with_cursor)
         .add_systems(Update, apply_forces_system)
         .add_systems(Update, update_boid_position)
         .add_systems(Update, confine_movement)
