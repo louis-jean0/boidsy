@@ -14,3 +14,6 @@ pub struct Velocity {
 pub struct Acceleration {
     pub acceleration: Vec2
 }
+
+#[derive(Component)]
+pub struct Shark;

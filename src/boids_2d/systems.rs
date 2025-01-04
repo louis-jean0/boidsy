@@ -11,7 +11,8 @@ use crate::boids_2d::events::*;
 use bevy::sprite::MaterialMesh2dBundle;
 use crate::kd_tree_2d::components::*;
 use crate::input::resources::ShapeSettings;
-use crate::input::systems::cursor_position;
+use crate::input::systems::*;
+use crate::ui::events::CursorVisibilityEvent;
 
 pub const SPRITE_SIZE: f32 = 32.0;
 
@@ -196,18 +197,38 @@ pub fn avoid_obstacles(
 }
 
 pub fn scare_with_cursor(
+    mut commands: Commands,
     mut boid_query: Query<(Entity, &Transform, &mut Velocity), With<Boid>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     mut event_writer: EventWriter<ApplyForceEvent>,
+    mut cursor_visibility_writer: EventWriter<CursorVisibilityEvent>,
     mouse_button_input: Res<Input<MouseButton>>,
-    kd_tree: Res<NNTree>
+    kd_tree: Res<NNTree>,
+    asset_server: Res<AssetServer>,
+    shark_query: Query<Entity, With<Shark>>
 ) {
     if mouse_button_input.pressed(MouseButton::Left) {
         if let Some(cursor_pos) = cursor_position(&window_query) {
+            cursor_visibility_writer.send(CursorVisibilityEvent {
+                visible: false
+            });
             let fear_range = 100.0;
             let cursor_radius = 50.0;
             let fear_coeff = 100000.0;
             let turn_factor: f32 = 20.0;
+
+            let shark_texture = asset_server.load("../assets/shark.png");
+            commands.spawn((
+                SpriteBundle {
+                    texture: shark_texture,
+                    transform: Transform {
+                        translation: Vec3::new(cursor_pos.x, cursor_pos.y, 0.0),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                Shark
+            ));
 
             let nearby_boids = kd_tree.within_distance(cursor_pos, fear_range + cursor_radius);
 
@@ -228,6 +249,17 @@ pub fn scare_with_cursor(
                     }
                 }
             }
+        }
+        for shark in shark_query.iter() {
+            commands.entity(shark).despawn();
+        }
+    }
+    else {
+        cursor_visibility_writer.send(CursorVisibilityEvent {
+            visible: true
+        });
+        for shark in shark_query.iter() {
+            commands.entity(shark).despawn();
         }
     }
 }

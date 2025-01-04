@@ -1,8 +1,10 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 use bevy_egui::*;
 
 use crate::boids_2d::resources::BoidSettings;
 use crate::input::resources::ShapeSettings;
+use crate::ui::events::CursorVisibilityEvent;
 
 //fps
 use bevy::diagnostic::DiagnosticsStore;
@@ -22,7 +24,7 @@ pub fn setup_ui(
         let bounce = &mut boid_settings.bounce_against_walls;
         ui.checkbox(bounce, "Boids bounce against walls");
         let boids_count = &mut boid_settings.count;
-        ui.add(egui::Slider::new(boids_count, 0..=10000).text("Boids count"));
+        ui.add(egui::Slider::new(boids_count, 0..=15000).text("Boids count"));
         let min_speed = &mut boid_settings.min_speed;
         ui.add(egui::Slider::new(min_speed, 0.0..=500.0).text("Min speed"));
         let max_speed = &mut boid_settings.max_speed;
@@ -53,6 +55,18 @@ pub fn setup_ui(
         ui.add(egui::Slider::new(radius,1.0..=100.0).text("Radius of obstacles"));
         ui.label("R to remove all obstacles");
     });
+}
+
+pub fn handle_cursor_visibility(
+    mut window_query: Query<&mut Window, With<PrimaryWindow>>,
+    mut cursor_events: EventReader<CursorVisibilityEvent>
+) {
+    println!("Handling cursor visibility");
+    for CursorVisibilityEvent{visible} in cursor_events.read() {
+        if let Ok(mut window) = window_query.get_single_mut() {
+            window.cursor.visible = *visible;
+        }
+    }
 }
 
 pub fn setup_fps_counter(
