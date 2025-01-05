@@ -15,5 +15,11 @@ pub struct Acceleration {
     pub acceleration: Vec2
 }
 
+#[derive(Component, Debug)]
+pub struct Mode2DMarker;
+
+#[derive(Component)]
+pub struct ObstacleTag;
+
 #[derive(Component)]
 pub struct Shark;

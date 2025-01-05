@@ -6,6 +6,8 @@ pub use systems::*;
 pub mod events;
 pub use events::*;
 
+pub mod resources;
+
 pub struct UiPlugin;
 
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;

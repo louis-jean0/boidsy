@@ -1,19 +1,18 @@
 use bevy::prelude::*;
-use crate::boids_2d::components::*;
-use bevy::sprite::MaterialMesh2dBundle;
-use crate::kd_tree_2d::components::*;
+use crate::boids_3d::components::*;
+use crate::kd_tree_3d::components::*;
 
 #[derive(Bundle)]
 pub struct BoidBundle {
     pub boid: Boid,
-    //pub transform: Transform,
     pub velocity: Velocity,
     pub acceleration: Acceleration,
-    pub sprite_bundle: SpriteBundle,
-    pub tracked_by_kdtree: TrackedByKDTree
+    pub pbr_bundle: PbrBundle,
+    pub mode_3d_marker: Mode3DMarker,
+    pub tracked_by_kdtree: TrackedByKDTree3D
 }
 
 #[derive(Bundle)]
 pub struct ObstacleBundle {
-    pub material_mesh: MaterialMesh2dBundle<ColorMaterial>,
+    pub pbr_bundle: PbrBundle
 }

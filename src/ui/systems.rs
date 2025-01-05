@@ -2,9 +2,11 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_egui::*;
 
-use crate::boids_2d::resources::BoidSettings;
+use crate::boids_2d::resources::BoidSettings2D;
+use crate::boids_3d::resources::BoidSettings3D;
 use crate::input::resources::ShapeSettings;
 use crate::ui::events::CursorVisibilityEvent;
+use crate::ui::resources::SimulationState;
 
 //fps
 use bevy::diagnostic::DiagnosticsStore;
@@ -18,42 +20,92 @@ pub struct FpsText;
 
 pub fn setup_ui(
     mut egui_context: EguiContexts,
-    mut boid_settings: ResMut<BoidSettings>,
-    mut shape_settings: ResMut<ShapeSettings>) {
+    mut boid_settings_2d: ResMut<BoidSettings2D>,
+    mut boid_settings_3d: ResMut<BoidSettings3D>,
+    mut shape_settings: ResMut<ShapeSettings>,
+    mut next_state: ResMut<NextState<SimulationState>>,
+    state: Res<State<SimulationState>>,
+) {
+    egui::Window::new("Simulation Mode").show(egui_context.ctx_mut(), |ui| {
+        if ui.button("2D Mode").clicked() {
+            next_state.set(SimulationState::Mode2D);
+        }
+        if ui.button("3D Mode").clicked() {
+            next_state.set(SimulationState::Mode3D);
+        }
+    });
+
     egui::Window::new("Boids settings").show(egui_context.ctx_mut(), |ui| {
-        let bounce = &mut boid_settings.bounce_against_walls;
-        ui.checkbox(bounce, "Boids bounce against walls");
-        let boids_count = &mut boid_settings.count;
-        ui.add(egui::Slider::new(boids_count, 0..=15000).text("Boids count"));
-        let min_speed = &mut boid_settings.min_speed;
-        ui.add(egui::Slider::new(min_speed, 0.0..=500.0).text("Min speed"));
-        let max_speed = &mut boid_settings.max_speed;
-        ui.add(egui::Slider::new(max_speed, 0.0..=1000.0).text("Max speed"));
-        let field_of_view = &mut boid_settings.field_of_view;
-        ui.add(egui::Slider::new(field_of_view, 0.0..=360.0).text("Field of view"));
-        let cohesion_range = &mut boid_settings.cohesion_range;
-        ui.add(egui::Slider::new(cohesion_range, 0.0..=100.0).text("Cohesion range"));
-        let max_alignment_range = *cohesion_range;
-        let alignment_range = &mut boid_settings.alignment_range;
-        ui.add(egui::Slider::new(alignment_range, 0.0..=max_alignment_range).text("Alignment range"));
-        let max_separation_range = *alignment_range;
-        let separation_range = &mut boid_settings.separation_range;
-        ui.add(egui::Slider::new(separation_range, 0.0..=max_separation_range).text("Separation range"));
-        let cohesion_coeff = &mut boid_settings.cohesion_coeff;
-        ui.add(egui::Slider::new(cohesion_coeff, 0.0..=50.0).text("Cohesion"));
-        let aligment_coeff = &mut boid_settings.alignment_coeff;
-        ui.add(egui::Slider::new(aligment_coeff, 0.0..=50.0).text("Alignment"));
-        let separation_coeff = &mut boid_settings.separation_coeff;
-        ui.add(egui::Slider::new(separation_coeff, 0.0..=50.0).text("Separation"));
-        let min_distance_between_boids = &mut boid_settings.min_distance_between_boids;
-        ui.add(egui::Slider::new(min_distance_between_boids, 0.0..=50.0).text("Minimum distance between boids"));
-        let collision_coeff = &mut boid_settings.collision_coeff;
-        ui.add(egui::Slider::new(collision_coeff, 0.0..=50.0).text("Collision"));
-        let attraction_coeff = &mut boid_settings.attraction_coeff;
-        ui.add(egui::Slider::new(attraction_coeff, 0.0..=100.0).text("Attraction to target"));
-        let radius = &mut shape_settings.radius;
-        ui.add(egui::Slider::new(radius,1.0..=100.0).text("Radius of obstacles"));
-        ui.label("R to remove all obstacles");
+        // Only show relevant settings based on mode
+        match *state.get() {
+            SimulationState::Mode2D => {
+                let bounce = &mut boid_settings_2d.bounce_against_walls;
+                ui.checkbox(bounce, "Boids bounce against walls");
+                let boids_count = &mut boid_settings_2d.count;
+                ui.add(egui::Slider::new(boids_count, 0..=15000).text("Boids count"));
+                let min_speed = &mut boid_settings_2d.min_speed;
+                ui.add(egui::Slider::new(min_speed, 0.0..=500.0).text("Min speed"));
+                let max_speed = &mut boid_settings_2d.max_speed;
+                ui.add(egui::Slider::new(max_speed, 0.0..=1000.0).text("Max speed"));
+                let field_of_view = &mut boid_settings_2d.field_of_view;
+                ui.add(egui::Slider::new(field_of_view, 0.0..=360.0).text("Field of view"));
+                let cohesion_range = &mut boid_settings_2d.cohesion_range;
+                ui.add(egui::Slider::new(cohesion_range, 0.0..=100.0).text("Cohesion range"));
+                let max_alignment_range = *cohesion_range;
+                let alignment_range = &mut boid_settings_2d.alignment_range;
+                ui.add(egui::Slider::new(alignment_range, 0.0..=max_alignment_range).text("Alignment range"));
+                let max_separation_range = *alignment_range;
+                let separation_range = &mut boid_settings_2d.separation_range;
+                ui.add(egui::Slider::new(separation_range, 0.0..=max_separation_range).text("Separation range"));
+                let cohesion_coeff = &mut boid_settings_2d.cohesion_coeff;
+                ui.add(egui::Slider::new(cohesion_coeff, 0.0..=50.0).text("Cohesion"));
+                let aligment_coeff = &mut boid_settings_2d.alignment_coeff;
+                ui.add(egui::Slider::new(aligment_coeff, 0.0..=50.0).text("Alignment"));
+                let separation_coeff = &mut boid_settings_2d.separation_coeff;
+                ui.add(egui::Slider::new(separation_coeff, 0.0..=50.0).text("Separation"));
+                let min_distance_between_boids = &mut boid_settings_2d.min_distance_between_boids;
+                ui.add(egui::Slider::new(min_distance_between_boids, 0.0..=50.0).text("Minimum distance between boids"));
+                let collision_coeff = &mut boid_settings_2d.collision_coeff;
+                ui.add(egui::Slider::new(collision_coeff, 0.0..=50.0).text("Collision"));
+                let attraction_coeff = &mut boid_settings_2d.attraction_coeff;
+                ui.add(egui::Slider::new(attraction_coeff, 0.0..=100.0).text("Attraction to target"));
+                let radius = &mut shape_settings.radius;
+                ui.add(egui::Slider::new(radius,1.0..=100.0).text("Radius of obstacles"));
+                ui.label("R to remove all obstacles");
+            }
+            SimulationState::Mode3D => {
+                let bounce = &mut boid_settings_3d.bounce_against_walls;
+                ui.checkbox(bounce, "Boids bounce against walls");
+                let boids_count = &mut boid_settings_3d.count;
+                ui.add(egui::Slider::new(boids_count, 0..=15000).text("Boids count"));
+                let min_speed = &mut boid_settings_3d.min_speed;
+                ui.add(egui::Slider::new(min_speed, 0.0..=500.0).text("Min speed"));
+                let max_speed = &mut boid_settings_3d.max_speed;
+                ui.add(egui::Slider::new(max_speed, 0.0..=1000.0).text("Max speed"));
+                let field_of_view = &mut boid_settings_3d.field_of_view;
+                ui.add(egui::Slider::new(field_of_view, 0.0..=360.0).text("Field of view"));
+                let cohesion_range = &mut boid_settings_3d.cohesion_range;
+                ui.add(egui::Slider::new(cohesion_range, 0.0..=100.0).text("Cohesion range"));
+                let max_alignment_range = *cohesion_range;
+                let alignment_range = &mut boid_settings_3d.alignment_range;
+                ui.add(egui::Slider::new(alignment_range, 0.0..=max_alignment_range).text("Alignment range"));
+                let max_separation_range = *alignment_range;
+                let separation_range = &mut boid_settings_3d.separation_range;
+                ui.add(egui::Slider::new(separation_range, 0.0..=max_separation_range).text("Separation range"));
+                let cohesion_coeff = &mut boid_settings_3d.cohesion_coeff;
+                ui.add(egui::Slider::new(cohesion_coeff, 0.0..=50.0).text("Cohesion"));
+                let aligment_coeff = &mut boid_settings_3d.alignment_coeff;
+                ui.add(egui::Slider::new(aligment_coeff, 0.0..=50.0).text("Alignment"));
+                let separation_coeff = &mut boid_settings_3d.separation_coeff;
+                ui.add(egui::Slider::new(separation_coeff, 0.0..=50.0).text("Separation"));
+                let min_distance_between_boids = &mut boid_settings_3d.min_distance_between_boids;
+                ui.add(egui::Slider::new(min_distance_between_boids, 0.0..=50.0).text("Minimum distance between boids"));
+                let collision_coeff = &mut boid_settings_3d.collision_coeff;
+                ui.add(egui::Slider::new(collision_coeff, 0.0..=50.0).text("Collision"));
+                let attraction_coeff = &mut boid_settings_3d.attraction_coeff;
+                ui.add(egui::Slider::new(attraction_coeff, 0.0..=100.0).text("Attraction to target"));                
+            }
+        }
     });
 }
 
@@ -61,7 +113,6 @@ pub fn handle_cursor_visibility(
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
     mut cursor_events: EventReader<CursorVisibilityEvent>
 ) {
-    println!("Handling cursor visibility");
     for CursorVisibilityEvent{visible} in cursor_events.read() {
         if let Ok(mut window) = window_query.get_single_mut() {
             window.cursor.visible = *visible;

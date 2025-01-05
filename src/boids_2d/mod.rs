@@ -19,7 +19,7 @@ pub struct Boids2DPlugin;
 
 impl Plugin for Boids2DPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(BoidSettings::new(BOIDS_COUNT,BOIDS_ALIGNMENT_RANGE, BOIDS_COHESION_RANGE, BOIDS_SEPARATION_RANGE))
+        app.insert_resource(BoidSettings2D::new(BOIDS_COUNT,BOIDS_ALIGNMENT_RANGE, BOIDS_COHESION_RANGE, BOIDS_SEPARATION_RANGE))
         .insert_resource(GroupsTargets::default())
         .add_event::<ApplyForceEvent>()
         .add_systems(Startup, spawn_boids)

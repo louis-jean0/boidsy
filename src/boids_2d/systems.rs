@@ -16,9 +16,6 @@ use crate::ui::events::CursorVisibilityEvent;
 
 pub const SPRITE_SIZE: f32 = 32.0;
 
-#[derive(Component)]
-pub struct ObstacleTag;
-
 pub fn spawn_boid_entity(
     commands: &mut Commands,
     window: &Window,
@@ -53,7 +50,8 @@ pub fn spawn_boid_entity(
                 texture: asset_server.load(texture_path),
                 ..default()
             },
-            tracked_by_kdtree: TrackedByKDTree
+            mode_2d_marker: Mode2DMarker,
+            tracked_by_kdtree: TrackedByKDTree2D
         }
     );
 }
@@ -62,7 +60,7 @@ pub fn spawn_boids(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
     asset_server: Res<AssetServer>,
-    boid_settings: Res<BoidSettings>) {
+    boid_settings: Res<BoidSettings2D>) {
 
     let window = window_query.get_single().unwrap();
     for _ in 0..boid_settings.count {
@@ -73,9 +71,9 @@ pub fn spawn_boids(
 pub fn flocking(
     boid_query: Query<(Entity, &Transform, &Velocity, &Boid), With<Boid>>,
     event_writer: EventWriter<ApplyForceEvent>,
-    boid_settings: Res<BoidSettings>,
+    boid_settings: Res<BoidSettings2D>,
     groups_targets: Res<GroupsTargets>,
-    kd_tree: Res<NNTree>
+    kd_tree: Res<NNTree2D>
 ) {
     let cohesion_range = boid_settings.cohesion_range;
     let alignment_range = boid_settings.alignment_range;
@@ -203,7 +201,7 @@ pub fn scare_with_cursor(
     mut event_writer: EventWriter<ApplyForceEvent>,
     mut cursor_visibility_writer: EventWriter<CursorVisibilityEvent>,
     mouse_button_input: Res<Input<MouseButton>>,
-    kd_tree: Res<NNTree>,
+    kd_tree: Res<NNTree2D>,
     asset_server: Res<AssetServer>,
     shark_query: Query<Entity, With<Shark>>
 ) {
@@ -277,7 +275,7 @@ pub fn apply_forces_system(
 
 pub fn update_boid_position(
     mut boid_query: Query<(&mut Transform, &mut Velocity, &mut Acceleration), With<Boid>>,
-    boid_settings: Res<BoidSettings>,
+    boid_settings: Res<BoidSettings2D>,
     time: Res<Time>
 ) {
     for(mut transform, mut velocity, mut acceleration) in boid_query.iter_mut() {
@@ -311,7 +309,7 @@ fn is_in_field_of_view(position: &Vec2, other_position: &Vec2, fov: &f32, cohesi
 pub fn confine_movement (
     mut boid_query: Query<(&mut Transform, &mut Velocity, &mut Acceleration), With<Boid>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    boid_settings: Res<BoidSettings>
+    boid_settings: Res<BoidSettings2D>
 ) {
     let window = window_query.get_single().unwrap();
     let half_sprite_size = SPRITE_SIZE / 2.0;
@@ -354,7 +352,7 @@ pub fn confine_movement (
 pub fn adjust_population(
     boid_query: Query<Entity, With<Boid>>,
     mut commands: Commands,
-    mut boid_settings: ResMut<BoidSettings>,
+    mut boid_settings: ResMut<BoidSettings2D>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     asset_server: Res<AssetServer>
 ) {
@@ -379,7 +377,7 @@ pub fn adjust_population(
     boid_settings.previous_count = current_count;
 }
 
-pub fn spawn_obstacle(
+pub fn spawn_obstacle_2d(
     commands: &mut Commands,
     position: Vec2,
     color: Vec3,

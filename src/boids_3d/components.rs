@@ -14,3 +14,6 @@ pub struct Velocity {
 pub struct Acceleration {
     pub acceleration: Vec3
 }
+
+#[derive(Component, Debug)]
+pub struct Mode3DMarker;

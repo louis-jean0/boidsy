@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 #[derive(Resource)]
-pub struct BoidSettings {
+pub struct BoidSettings3D {
     pub count: usize,
     pub previous_count: usize,
     pub cohesion_range: f32,
@@ -19,9 +19,9 @@ pub struct BoidSettings {
     pub field_of_view: f32
 }
 
-impl Default for BoidSettings {
+impl Default for BoidSettings3D {
     fn default() -> Self {
-        BoidSettings {
+        BoidSettings3D {
             count: 500,
             previous_count: 500,
             alignment_range: 30.0,
@@ -41,9 +41,9 @@ impl Default for BoidSettings {
     }
 }
 
-impl BoidSettings {
+impl BoidSettings3D {
     pub fn new(count: usize, alignment_range: f32, cohesion_range: f32, separation_range: f32) -> Self {
-        BoidSettings {
+        BoidSettings3D {
             count: count,
             previous_count: count,
             alignment_range: alignment_range,
@@ -56,15 +56,15 @@ impl BoidSettings {
 
 #[derive(Resource)]
 pub struct GroupsTargets {
-    pub targets: Vec<Vec2>
+    pub targets: Vec<Vec3>
 }
 
 impl Default for GroupsTargets {
     fn default() -> Self {
         GroupsTargets {
             targets: vec![
-                Vec2::new(1290.0,540.0),
-                Vec2::new(430.0,540.0)
+                Vec3::new(1290.0,540.0,10.0),
+                Vec3::new(430.0,540.0,10.0)
             ]
         }
     }

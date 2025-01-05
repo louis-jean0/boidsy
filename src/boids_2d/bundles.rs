@@ -6,11 +6,11 @@ use crate::kd_tree_2d::components::*;
 #[derive(Bundle)]
 pub struct BoidBundle {
     pub boid: Boid,
-    //pub transform: Transform,
     pub velocity: Velocity,
     pub acceleration: Acceleration,
     pub sprite_bundle: SpriteBundle,
-    pub tracked_by_kdtree: TrackedByKDTree
+    pub mode_2d_marker: Mode2DMarker,
+    pub tracked_by_kdtree: TrackedByKDTree2D
 }
 
 #[derive(Bundle)]
