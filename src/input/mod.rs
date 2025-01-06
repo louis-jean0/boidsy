@@ -12,7 +12,10 @@ pub struct InputPlugin;
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ShapeSettings::new(RADIUS))
-        .add_systems(Update, mouse_buttons_input)
-        .add_systems(Update, scroll_events);
+        .add_systems(Update, (
+            mouse_buttons_input,
+            scroll_events,
+            handle_camera_control,
+        ));
     }
 }

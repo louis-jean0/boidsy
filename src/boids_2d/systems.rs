@@ -7,6 +7,7 @@ use crate::boids_2d::components::*;
 use crate::boids_2d::resources::*;
 use crate::boids_2d::bundles::*;
 use crate::boids_2d::events::*;
+use crate::ui::resources::SimulationState;
 
 use bevy::sprite::MaterialMesh2dBundle;
 use crate::kd_tree_2d::components::*;
@@ -203,8 +204,10 @@ pub fn scare_with_cursor(
     mouse_button_input: Res<Input<MouseButton>>,
     kd_tree: Res<NNTree2D>,
     asset_server: Res<AssetServer>,
-    shark_query: Query<Entity, With<Shark>>
+    shark_query: Query<Entity, With<Shark>>,
+    simulation_state: Res<State<SimulationState>>
 ) {
+    if simulation_state.get() != &SimulationState::Mode2D {return;}
     if mouse_button_input.pressed(MouseButton::Left) {
         if let Some(cursor_pos) = cursor_position(&window_query) {
             cursor_visibility_writer.send(CursorVisibilityEvent {

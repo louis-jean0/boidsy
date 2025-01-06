@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::window::{PrimaryWindow, WindowResolution};
+use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy_egui::*;
 
 mod boids_2d;
@@ -8,18 +9,23 @@ mod input;
 mod kd_tree_2d;
 mod boids_3d;
 mod kd_tree_3d;
+mod underwater;
 
 use boids_2d::Boids2DPlugin;
+use boids_3d::systems::BOUNDS_SIZE;
 use input::InputPlugin;
 use ui::UiPlugin;
 use kd_tree_2d::KDTree2DPlugin;
 use boids_3d::Boids3DPlugin;
 use kd_tree_3d::KDTree3DPlugin;
 use ui::resources::SimulationState;
+use underwater::UnderwaterPlugin;
+
 use crate::boids_2d::components::Mode2DMarker;
 use crate::boids_3d::components::Mode3DMarker;
 use crate::boids_2d::resources::BoidSettings2D;
 use crate::boids_3d::resources::BoidSettings3D;
+use crate::underwater::setup_underwater_scene;
 
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
@@ -42,11 +48,13 @@ fn main() {
             KDTree3DPlugin,
             Boids2DPlugin,
             Boids3DPlugin,
+            UnderwaterPlugin,
             UiPlugin,
             InputPlugin,
         ))
         .add_systems(OnEnter(SimulationState::Mode2D), setup_2d_mode)
         .add_systems(OnEnter(SimulationState::Mode3D), setup_3d_mode)
+        .add_systems(OnEnter(SimulationState::Underwater), setup_underwater_scene)
         .add_systems(OnExit(SimulationState::Mode2D), cleanup_2d_mode)
         .add_systems(OnExit(SimulationState::Mode3D), cleanup_3d_mode)
         .run();
@@ -74,16 +82,39 @@ fn setup_3d_mode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    boid_settings: Res<BoidSettings3D>
+    boid_settings: Res<BoidSettings3D>,
 ) {
     commands.spawn((
         Camera3dBundle {
-            transform: Transform::from_xyz(100.0, 100.0, 100.0).looking_at(Vec3::ZERO, Vec3::Y),
+            transform: Transform::from_xyz(-100.0, BOUNDS_SIZE * 2.0, -100.0)
+                .looking_at(Vec3::ZERO, Vec3::Y),
+            camera: Camera {
+                ..default()
+            },
+            camera_3d: Camera3d {
+                clear_color: ClearColorConfig::Custom(Color::rgb(0.1, 0.1, 0.5)),
+                ..default()
+            },
             ..default()
         },
         Mode3DMarker,
     ));
     
+    commands.insert_resource(AmbientLight {
+        color: Color::WHITE,
+        brightness: 1.0,
+    });
+    
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            illuminance: 20000.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(0.0, 50.0, 0.0).looking_at(Vec3::ZERO, Vec3::Z),
+        ..default()
+    });
+
     boids_3d::setup_3d_scene(&mut commands, &mut meshes, &mut materials);
     boids_3d::systems::spawn_boids(commands, boid_settings, meshes, materials);
 }

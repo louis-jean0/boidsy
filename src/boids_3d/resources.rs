@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use super::BOUNDS_SIZE;
 
 #[derive(Resource)]
 pub struct BoidSettings3D {
@@ -22,10 +23,10 @@ pub struct BoidSettings3D {
 impl Default for BoidSettings3D {
     fn default() -> Self {
         BoidSettings3D {
-            count: 500,
-            previous_count: 500,
+            count: 50,
+            previous_count: 50,
+            cohesion_range: 50.0,
             alignment_range: 30.0,
-            cohesion_range: 10.0,
             separation_range: 20.0,
             min_distance_between_boids: 20.0,
             cohesion_coeff: 20.0,
@@ -41,19 +42,6 @@ impl Default for BoidSettings3D {
     }
 }
 
-impl BoidSettings3D {
-    pub fn new(count: usize, alignment_range: f32, cohesion_range: f32, separation_range: f32) -> Self {
-        BoidSettings3D {
-            count: count,
-            previous_count: count,
-            alignment_range: alignment_range,
-            cohesion_range: cohesion_range,
-            separation_range: separation_range,
-            ..Default::default()
-        }
-    }
-}
-
 #[derive(Resource)]
 pub struct GroupsTargets {
     pub targets: Vec<Vec3>
@@ -61,11 +49,25 @@ pub struct GroupsTargets {
 
 impl Default for GroupsTargets {
     fn default() -> Self {
+        let radius = BOUNDS_SIZE * 0.3;
         GroupsTargets {
             targets: vec![
-                Vec3::new(1290.0,540.0,10.0),
-                Vec3::new(430.0,540.0,10.0)
+                Vec3::new(-radius, 0.0, 0.0),
+                Vec3::new(radius, 0.0, 0.0),
             ]
+        }
+    }
+}
+
+#[derive(Resource)]
+pub struct CameraControlState {
+    pub is_active: bool,
+}
+
+impl Default for CameraControlState {
+    fn default() -> Self {
+        Self {
+            is_active: false,
         }
     }
 }

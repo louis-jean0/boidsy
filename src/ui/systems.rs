@@ -26,17 +26,19 @@ pub fn setup_ui(
     mut next_state: ResMut<NextState<SimulationState>>,
     state: Res<State<SimulationState>>,
 ) {
-    egui::Window::new("Simulation Mode").show(egui_context.ctx_mut(), |ui| {
-        if ui.button("2D Mode").clicked() {
+    egui::Window::new("Simulation mode").show(egui_context.ctx_mut(), |ui| {
+        if ui.button("2D mode").clicked() {
             next_state.set(SimulationState::Mode2D);
         }
-        if ui.button("3D Mode").clicked() {
+        if ui.button("3D mode").clicked() {
             next_state.set(SimulationState::Mode3D);
+        }
+        if ui.button("Underwater").clicked() {
+            next_state.set(SimulationState::Underwater);
         }
     });
 
     egui::Window::new("Boids settings").show(egui_context.ctx_mut(), |ui| {
-        // Only show relevant settings based on mode
         match *state.get() {
             SimulationState::Mode2D => {
                 let bounce = &mut boid_settings_2d.bounce_against_walls;
@@ -104,6 +106,9 @@ pub fn setup_ui(
                 ui.add(egui::Slider::new(collision_coeff, 0.0..=50.0).text("Collision"));
                 let attraction_coeff = &mut boid_settings_3d.attraction_coeff;
                 ui.add(egui::Slider::new(attraction_coeff, 0.0..=100.0).text("Attraction to target"));                
+            }
+            SimulationState::Underwater => {
+                return;
             }
         }
     });

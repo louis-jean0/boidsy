@@ -1,6 +1,8 @@
 use bevy::prelude::*;
+use bevy::window::CursorGrabMode;
 use bevy::window::PrimaryWindow;
 use crate::input::resources::*;
+use crate::boids_3d::resources::CameraControlState;
 
 use crate::boids_2d::components::ObstacleTag;
 use crate::boids_2d::systems::spawn_obstacle_2d;
@@ -40,11 +42,14 @@ pub fn mouse_buttons_input(
                     spawn_obstacle_3d(
                         &mut commands,
                         Vec3::new(position.x, position.y, 0.0),
-                        Vec3::new(position.x / window.width(), position.y / window.height(), 0.5),
+                        Vec3::new(0.0, 0.0, 0.5),
                         shape_settings.radius,
                         &mut meshes,
                         &mut standard_materials
                     );
+                }
+                SimulationState::Underwater => {
+                    return;
                 }
             }
         }
@@ -87,6 +92,28 @@ pub fn scroll_events(
             MouseScrollUnit::Pixel => {
                 println!("Scroll (pixel units): vertical: {}, horizontal: {}", ev.y, ev.x);
             }
+        }
+    }
+}
+
+pub fn handle_camera_control(
+    mut windows: Query<&mut Window, With<PrimaryWindow>>,
+    keyboard: Res<Input<KeyCode>>,
+    mut camera_control: ResMut<CameraControlState>,
+    simulation_state: Res<State<SimulationState>>,
+) {
+    if *simulation_state.get() != SimulationState::Mode3D { return; }
+
+    if keyboard.just_pressed(KeyCode::E) {
+        let mut window = windows.single_mut();
+        camera_control.is_active = !camera_control.is_active;
+        
+        if camera_control.is_active {
+            window.cursor.visible = false;
+            window.cursor.grab_mode = CursorGrabMode::Locked;
+        } else {
+            window.cursor.visible = true;
+            window.cursor.grab_mode = CursorGrabMode::None;
         }
     }
 }

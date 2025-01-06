@@ -10,7 +10,8 @@ use crate::boids_3d::events::*;
 use crate::kd_tree_3d::components::*;
 use crate::boids_2d::components::ObstacleTag;
 
-pub const BOUNDS_SIZE: f32 = 100.0;
+pub const BOUNDS_SIZE: f32 = 250.0;
+pub const BOIDS_SIZE: f32 = 2.0;
 
 pub fn spawn_boid_entity(
     commands: &mut Commands,
@@ -19,14 +20,13 @@ pub fn spawn_boid_entity(
 ) {
     let mut rng = rand::thread_rng();
     
-    // Random position within cube bounds
+    // Spawn boids in a smaller area initially so they're visible
     let random_pos = Vec3::new(
-        rng.gen_range(-BOUNDS_SIZE..BOUNDS_SIZE),
-        rng.gen_range(-BOUNDS_SIZE..BOUNDS_SIZE),
-        rng.gen_range(-BOUNDS_SIZE..BOUNDS_SIZE),
+        rng.gen_range(-50.0..50.0),
+        rng.gen_range(-50.0..50.0),
+        rng.gen_range(-50.0..50.0),
     );
     
-    // Random initial velocity (spherical coordinates)
     let theta = rng.gen_range(0.0..2.0 * PI);
     let phi = rng.gen_range(0.0..PI);
     let initial_velocity = Vec3::new(
@@ -35,30 +35,31 @@ pub fn spawn_boid_entity(
         f32::cos(phi),
     );
 
-    commands.spawn(
-        BoidBundle {
-            boid: Boid {
-                group: rng.gen_range(0..2)
-            },
-            velocity: Velocity {
-                velocity: initial_velocity
-            },
-            acceleration: Acceleration {
-                acceleration: Vec3::ZERO
-            },
-            pbr_bundle: PbrBundle {
-                mesh: meshes.add(Mesh::from(shape::Cube::default())),
-                material: materials.add(StandardMaterial {
-                    base_color: Color::rgb(0.3, 0.5, 0.8),
-                    ..default()
-                }),
-                transform: Transform::from_translation(random_pos),
+    // Make boids brighter and bigger for visibility
+    commands.spawn(BoidBundle {
+        boid: Boid { group: rng.gen_range(0..2) },
+        velocity: Velocity { velocity: initial_velocity },
+        acceleration: Acceleration { acceleration: Vec3::ZERO },
+        pbr_bundle: PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::UVSphere {
+                radius: BOIDS_SIZE,
+                ..default()
+            })),
+            material: materials.add(StandardMaterial {
+                base_color: Color::rgb(0.9, 0.3, 0.3), // Brighter red color
+                emissive: Color::rgba(0.5, 0.0, 0.0, 0.5), // Add glow
+                ..default()
+            }),
+            transform: Transform {
+                translation: random_pos,
+                scale: Vec3::splat(BOIDS_SIZE * 2.0), // Double the size
                 ..default()
             },
-            mode_3d_marker: Mode3DMarker,
-            tracked_by_kdtree: TrackedByKDTree3D
-        }
-    );
+            ..default()
+        },
+        mode_3d_marker: Mode3DMarker,
+        tracked_by_kdtree: TrackedByKDTree3D
+    });
 }
 
 pub fn spawn_boids(
@@ -187,7 +188,6 @@ pub fn update_boid_position(
     for (mut transform, mut velocity, mut acceleration) in boid_query.iter_mut() {
         velocity.velocity += acceleration.acceleration * time.delta_seconds();
         
-        // Clamp speed
         let speed = velocity.velocity.length();
         if speed < boid_settings.min_speed {
             velocity.velocity = velocity.velocity.normalize() * boid_settings.min_speed;
@@ -195,10 +195,8 @@ pub fn update_boid_position(
             velocity.velocity = velocity.velocity.normalize() * boid_settings.max_speed;
         }
 
-        // Update position
         transform.translation += velocity.velocity * time.delta_seconds();
         
-        // Update rotation to face velocity direction
         if velocity.velocity.length_squared() > 0.0 {
             let up = Vec3::Y;
             let forward = velocity.velocity.normalize();
@@ -207,7 +205,6 @@ pub fn update_boid_position(
             transform.rotation = Quat::from_mat3(&Mat3::from_cols(right, up, -forward));
         }
 
-        // Reset acceleration
         acceleration.acceleration = Vec3::ZERO;
     }
 }
@@ -216,17 +213,17 @@ pub fn confine_movement (
     mut boid_query: Query<(&mut Transform, &mut Velocity, &mut Acceleration), With<Boid>>,
     boid_settings: Res<BoidSettings3D>
 ) {
-    let half_sprite_size = 16.0;
-    let x_min = -BOUNDS_SIZE + half_sprite_size;
-    let y_min = -BOUNDS_SIZE + half_sprite_size;
-    let z_min = -BOUNDS_SIZE + half_sprite_size;
-    let x_max = BOUNDS_SIZE - half_sprite_size;
-    let y_max = BOUNDS_SIZE - half_sprite_size;
-    let z_max = BOUNDS_SIZE - half_sprite_size;
+    let margin = BOIDS_SIZE * 0.8;
+    let x_min = -BOUNDS_SIZE + margin;
+    let y_min = -BOUNDS_SIZE + margin;
+    let z_min = -BOUNDS_SIZE + margin;
+    let x_max = BOUNDS_SIZE - margin;
+    let y_max = BOUNDS_SIZE - margin;
+    let z_max = BOUNDS_SIZE - margin;
     for (mut transform, mut velocity, _) in boid_query.iter_mut() {
         if boid_settings.bounce_against_walls {
             let turn_factor: f32 = 20.0;
-            let margin = 10.0;
+            let margin = BOUNDS_SIZE / 2.0;
             if transform.translation.x > x_max - margin {
                 velocity.velocity.x -= turn_factor;
             }
@@ -278,13 +275,11 @@ pub fn adjust_population(
 
     if current_count == previous_count {
         return;
-    }
-    else if current_count > previous_count {
+    } else if current_count > previous_count {
         for _ in 0..(current_count - previous_count) {
             spawn_boid_entity(&mut commands, &mut meshes, &mut materials);
         }
-    }
-    else {
+    } else {
         let to_remove = previous_count - current_count;
         for entity in boid_query.iter().take(to_remove) {
             commands.entity(entity).despawn();
@@ -321,5 +316,5 @@ pub fn spawn_obstacle_3d(
             },
         },
         ObstacleTag,
-     ));
+         ));
 }

@@ -22,10 +22,10 @@ pub struct BoidSettings2D {
 impl Default for BoidSettings2D {
     fn default() -> Self {
         BoidSettings2D {
-            count: 500,
-            previous_count: 500,
+            count: 2000,
+            previous_count: 2000,
+            cohesion_range: 50.0,
             alignment_range: 30.0,
-            cohesion_range: 10.0,
             separation_range: 20.0,
             min_distance_between_boids: 20.0,
             cohesion_coeff: 20.0,
@@ -37,19 +37,6 @@ impl Default for BoidSettings2D {
             bounce_against_walls: true,
             attraction_coeff: 1.0,
             field_of_view: 90.0
-        }
-    }
-}
-
-impl BoidSettings2D {
-    pub fn new(count: usize, alignment_range: f32, cohesion_range: f32, separation_range: f32) -> Self {
-        BoidSettings2D {
-            count: count,
-            previous_count: count,
-            alignment_range: alignment_range,
-            cohesion_range: cohesion_range,
-            separation_range: separation_range,
-            ..Default::default()
         }
     }
 }
