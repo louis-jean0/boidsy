@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::pbr::{NotShadowCaster, NotShadowReceiver};
 use bevy_spatial::SpatialAccess;
 use rand::prelude::*;
 use std::f32::consts::PI;
@@ -20,7 +21,6 @@ pub fn spawn_boid_entity(
 ) {
     let mut rng = rand::thread_rng();
     
-    // Spawn boids in a smaller area initially so they're visible
     let random_pos = Vec3::new(
         rng.gen_range(-50.0..50.0),
         rng.gen_range(-50.0..50.0),
@@ -35,7 +35,6 @@ pub fn spawn_boid_entity(
         f32::cos(phi),
     );
 
-    // Make boids brighter and bigger for visibility
     commands.spawn(BoidBundle {
         boid: Boid { group: rng.gen_range(0..2) },
         velocity: Velocity { velocity: initial_velocity },
@@ -46,13 +45,13 @@ pub fn spawn_boid_entity(
                 ..default()
             })),
             material: materials.add(StandardMaterial {
-                base_color: Color::rgb(0.9, 0.3, 0.3), // Brighter red color
-                emissive: Color::rgba(0.5, 0.0, 0.0, 0.5), // Add glow
+                base_color: Color::rgb(0.9, 0.3, 0.3),
+                emissive: Color::rgba(0.5, 0.0, 0.0, 0.5),
                 ..default()
             }),
             transform: Transform {
                 translation: random_pos,
-                scale: Vec3::splat(BOIDS_SIZE * 2.0), // Double the size
+                scale: Vec3::splat(BOIDS_SIZE * 2.0),
                 ..default()
             },
             ..default()
@@ -275,11 +274,13 @@ pub fn adjust_population(
 
     if current_count == previous_count {
         return;
-    } else if current_count > previous_count {
+    } 
+    else if current_count > previous_count {
         for _ in 0..(current_count - previous_count) {
             spawn_boid_entity(&mut commands, &mut meshes, &mut materials);
         }
-    } else {
+    }
+    else {
         let to_remove = previous_count - current_count;
         for entity in boid_query.iter().take(to_remove) {
             commands.entity(entity).despawn();
@@ -317,4 +318,60 @@ pub fn spawn_obstacle_3d(
         },
         ObstacleTag,
          ));
+}
+
+pub fn setup_3d_scene(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) {
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            shadows_enabled: true,
+            illuminance: 10000.0,
+            ..default()
+        },
+        transform: Transform::from_xyz(50.0, 50.0, 50.0).looking_at(Vec3::ZERO, Vec3::Y),
+        ..default()
+    });
+
+    commands.insert_resource(AmbientLight {
+        color: Color::WHITE,
+        brightness: 0.5,
+    });
+
+    let boundary_material = materials.add(StandardMaterial {
+        base_color: Color::rgba(1.0, 0.5, 0.0, 0.05),
+        alpha_mode: AlphaMode::Blend,
+        unlit: true,
+        double_sided: true,
+        cull_mode: None,
+        ..default()
+    });
+
+    commands.spawn((PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Box::new(
+            BOUNDS_SIZE * 2.0,
+            BOUNDS_SIZE * 2.0,
+            BOUNDS_SIZE * 2.0,
+        ))),
+        material: boundary_material,
+        transform: Transform::from_xyz(0.0, 0.1, 0.0),
+        ..default()
+    },
+    NotShadowCaster,
+    NotShadowReceiver
+    ));
+
+    let ground_material = materials.add(StandardMaterial {
+        base_color: Color::WHITE,
+        ..default()
+    });
+
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Plane::from_size(BOUNDS_SIZE * 4.0))),
+        material: ground_material,
+        transform: Transform::from_xyz(0.0, -BOUNDS_SIZE, 0.0),
+        ..default()
+    });
 }

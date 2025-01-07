@@ -33,8 +33,8 @@ impl Default for BoidSettings3D {
             alignment_coeff: 5.0,
             separation_coeff: 20.0,
             collision_coeff: 24.0,
-            min_speed: 500.0,
-            max_speed: 1000.0,
+            min_speed: 100.0,
+            max_speed: 500.0,
             bounce_against_walls: true,
             attraction_coeff: 1.0,
             field_of_view: 90.0

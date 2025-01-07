@@ -10,6 +10,7 @@ use crate::boids_2d::systems::remove_all_obstacles;
 use crate::boids_3d::systems::spawn_obstacle_3d;
 use crate::ui::resources::SimulationState;
 use bevy::input::mouse::MouseWheel;
+use bevy::input::mouse::MouseMotion;
 
 pub fn mouse_buttons_input(
     mouse_buttons: Res<Input<MouseButton>>,
@@ -116,4 +117,57 @@ pub fn handle_camera_control(
             window.cursor.grab_mode = CursorGrabMode::None;
         }
     }
+}
+
+pub fn handle_camera_movement(
+    time: Res<Time>,
+    keyboard_input: Res<Input<KeyCode>>,
+    mut mouse_motion: EventReader<MouseMotion>,
+    mut settings: ResMut<MouseSettings>,
+    mut query: Query<&mut Transform, With<Camera3d>>,
+    camera_control_state: ResMut<CameraControlState>
+) {
+    if !camera_control_state.is_active {return;}
+    let Ok(mut transform) = query.get_single_mut() else { return };
+    
+    for ev in mouse_motion.read() {
+        settings.pitch = (settings.pitch - ev.delta.y * settings.sensitivity)
+            .clamp(-1.54, 1.54); // Roughly PI/2
+        settings.yaw -= ev.delta.x * settings.sensitivity;
+    }
+
+    let rotation = Quat::from_euler(EulerRot::YXZ, settings.yaw, settings.pitch, 0.0);
+    transform.rotation = rotation;
+
+    let mut movement = Vec3::ZERO;
+    let mut speed = 500.0;
+
+    if keyboard_input.pressed(KeyCode::ShiftLeft) {
+        speed *= 2.0;
+    }
+
+    let forward = transform.forward();
+    let right = transform.right();
+    
+    if keyboard_input.pressed(KeyCode::Z) {
+        movement += forward;
+    }
+    if keyboard_input.pressed(KeyCode::S) {
+        movement -= forward;
+    }
+    if keyboard_input.pressed(KeyCode::Q) {
+        movement -= right;
+    }
+    if keyboard_input.pressed(KeyCode::D) {
+        movement += right;
+    }
+
+    if keyboard_input.pressed(KeyCode::Space) {
+        movement.y += 1.0;
+    }
+    if keyboard_input.pressed(KeyCode::ControlLeft) {
+        movement.y -= 1.0;
+    }
+
+    transform.translation += movement.normalize_or_zero() * speed * time.delta_seconds();
 }

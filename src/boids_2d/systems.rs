@@ -33,10 +33,6 @@ pub fn spawn_boid_entity(
             boid: Boid {
                 group: random_group
             },
-            // transform: Transform {
-            //     translation: Vec3::new(random_x, random_y, 0.0),
-            //     ..default()
-            // },
             velocity: Velocity {
                 velocity: Vec2::new(f32::cos(random_angle), f32::sin(random_angle))
             },
@@ -62,7 +58,7 @@ pub fn spawn_boids(
     window_query: Query<&Window, With<PrimaryWindow>>,
     asset_server: Res<AssetServer>,
     boid_settings: Res<BoidSettings2D>) {
-
+    info!("Spawning {} boids", boid_settings.count);
     let window = window_query.get_single().unwrap();
     for _ in 0..boid_settings.count {
         spawn_boid_entity(&mut commands, &window, &asset_server);

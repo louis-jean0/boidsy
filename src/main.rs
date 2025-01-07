@@ -50,7 +50,7 @@ fn main() {
             Boids3DPlugin,
             UnderwaterPlugin,
             UiPlugin,
-            InputPlugin,
+            InputPlugin
         ))
         .add_systems(OnEnter(SimulationState::Mode2D), setup_2d_mode)
         .add_systems(OnEnter(SimulationState::Mode3D), setup_3d_mode)
@@ -74,15 +74,14 @@ fn setup_2d_mode(
         },
         Mode2DMarker,
     ));
-    
-   boids_2d::systems::spawn_boids(commands, window_query, asset_server, boid_settings);
+    boids_2d::systems::spawn_boids(commands, window_query, asset_server, boid_settings);
 }
 
 fn setup_3d_mode(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    boid_settings: Res<BoidSettings3D>,
+    boid_settings: Res<BoidSettings3D>
 ) {
     commands.spawn((
         Camera3dBundle {
@@ -115,7 +114,7 @@ fn setup_3d_mode(
         ..default()
     });
 
-    boids_3d::setup_3d_scene(&mut commands, &mut meshes, &mut materials);
+    crate::boids_3d::systems::setup_3d_scene(&mut commands, &mut meshes, &mut materials);
     boids_3d::systems::spawn_boids(commands, boid_settings, meshes, materials);
 }
 

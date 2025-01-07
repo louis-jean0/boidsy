@@ -21,3 +21,20 @@ impl ShapeSettings {
         }
     }
 }
+
+#[derive(Resource)]
+pub struct MouseSettings {
+    pub sensitivity: f32,
+    pub pitch: f32,
+    pub yaw: f32,
+}
+
+impl Default for MouseSettings {
+    fn default() -> Self {
+        Self {
+            sensitivity: 0.001,
+            pitch: 0.0,
+            yaw: 0.0,
+        }
+    }
+}

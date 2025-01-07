@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Resource)]
+#[derive(Resource,Debug)]
 pub struct BoidSettings2D {
     pub count: usize,
     pub previous_count: usize,
@@ -22,8 +22,8 @@ pub struct BoidSettings2D {
 impl Default for BoidSettings2D {
     fn default() -> Self {
         BoidSettings2D {
-            count: 2000,
-            previous_count: 2000,
+            count: 50,
+            previous_count: 50,
             cohesion_range: 50.0,
             alignment_range: 30.0,
             separation_range: 20.0,
