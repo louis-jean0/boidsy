@@ -7,7 +7,7 @@ use crate::boids_3d::components::*;
 use crate::boids_3d::resources::*;
 use crate::boids_3d::bundles::*;
 use crate::boids_3d::events::*;
-
+use std::sync::Mutex;
 use crate::kd_tree_3d::components::*;
 use crate::boids_2d::components::ObstacleTag;
 
@@ -74,41 +74,48 @@ pub fn spawn_boids(
 
 pub fn flocking(
     boid_query: Query<(Entity, &Transform, &Velocity, &Boid), With<Boid>>,
-    mut event_writer: EventWriter<ApplyForceEvent>,
+    event_writer: EventWriter<ApplyForceEvent>,
     boid_settings: Res<BoidSettings3D>,
     groups_targets: Res<GroupsTargets>,
     kd_tree: Res<NNTree3D>
 ) {
-    for (entity, transform, velocity, boid) in boid_query.iter() {
-        let position = transform.translation;
-        let mut cohesion_neighbors = Vec::new();
-        let mut repulsion_neighbors = Vec::new();
-        let mut alignment_neighbors = Vec::new();
+    let cohesion_range = boid_settings.cohesion_range;
+    let alignment_range = boid_settings.alignment_range;
+    let separation_range = boid_settings.separation_range;
 
-        for (_, neighbor_entity) in kd_tree.within_distance(position, boid_settings.cohesion_range) {
+    let event_writer = Mutex::new(event_writer);
+
+    boid_query.par_iter().for_each(|(entity, transform, velocity, boid)| {
+        let position = transform.translation;
+        let mut cohesion_neighbors: Vec<Vec3> = Vec::new();
+        let mut repulsion_neighbors: Vec<(Vec3, f32)> = Vec::new();
+        let mut alignment_neighbors: Vec<Vec3> = Vec::new();
+
+        for (_, neighbor_entity) in kd_tree.within_distance(position, cohesion_range) {
             if let Ok((_, neighbor_transform, neighbor_velocity, _)) = boid_query.get(neighbor_entity.unwrap()) {
                 let neighbor_pos = neighbor_transform.translation;
                 if let Some(distance) = is_in_field_of_view(&position, &velocity.velocity, &neighbor_pos, &boid_settings.field_of_view) {
-                    if distance < boid_settings.separation_range {
+                    if distance < separation_range {
                         repulsion_neighbors.push((neighbor_pos, distance));
-                    } else if distance < boid_settings.alignment_range {
+                    } else if distance < alignment_range {
                         alignment_neighbors.push(neighbor_velocity.velocity);
-                    } else if distance < boid_settings.cohesion_range {
+                    } else if distance < cohesion_range {
                         cohesion_neighbors.push(neighbor_pos);
                     }
                 }
             }
         }
-
         let cohesion_force = cohesion(&position, &cohesion_neighbors, &boid_settings.cohesion_coeff);
         let separation_force = separation(&position, &repulsion_neighbors, &boid_settings.separation_coeff);
         let alignment_force = alignment(&velocity.velocity, &alignment_neighbors, &boid_settings.alignment_coeff);
         let target = groups_targets.targets[boid.group as usize];
         let attraction_force = attraction_to_target(&position, &target, &boid_settings.attraction_coeff);
-
         let total_force = cohesion_force + separation_force + alignment_force + attraction_force;
-        event_writer.send(ApplyForceEvent { entity, force: total_force });
-    }
+        let mut event_writer = event_writer.lock().unwrap();
+        event_writer.send(ApplyForceEvent {
+            entity: entity,
+            force: total_force });
+    });
 }
 
 fn is_in_field_of_view(position: &Vec3, velocity: &Vec3, other_pos: &Vec3, fov: &f32) -> Option<f32> {

@@ -27,7 +27,7 @@ pub fn spawn_boid_entity(
     let random_x: f32 = rng.gen_range(0.0..window.width());
     let random_y: f32 = rng.gen_range(0.0..window.height());
     let random_group: u8 = rng.gen_range(0..2);
-    let random_angle: f32 = rng.gen_range(0.0..1.0) * 360.0 * (std::f32::consts::PI / 180.0); // En radians
+    let random_angle: f32 = ((rng.gen_range(0.0..1.0) * 360.0) as f32).to_radians();
     commands.spawn(
         BoidBundle {
             boid: Boid {
@@ -297,7 +297,7 @@ fn is_in_field_of_view(position: &Vec2, other_position: &Vec2, fov: &f32, cohesi
     let distance_squared = to_other.length_squared();
     let cohesion_range_squared = cohesion_range * cohesion_range;
     if distance_squared < cohesion_range_squared {
-        let angle_between_the_two = position.angle_between(*other_position) * (180.0 / std::f32::consts::PI);
+        let angle_between_the_two = position.angle_between(*other_position).to_degrees();
         if angle_between_the_two <= *fov {
             return Some(distance_squared.sqrt());
         }
