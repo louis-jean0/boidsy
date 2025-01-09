@@ -3,6 +3,7 @@ use bevy::window::PrimaryWindow;
 use bevy_egui::*;
 
 use crate::boids_2d::resources::BoidSettings2D;
+use crate::boids_3d::events::ResizeEvent;
 use crate::boids_3d::resources::BoidSettings3D;
 use crate::input::resources::ShapeSettings;
 use crate::ui::events::CursorVisibilityEvent;
@@ -25,6 +26,7 @@ pub fn setup_ui(
     mut shape_settings: ResMut<ShapeSettings>,
     mut next_state: ResMut<NextState<SimulationState>>,
     state: Res<State<SimulationState>>,
+    mut resize_event_writer: EventWriter<ResizeEvent>
 ) {
     egui::Window::new("Simulation mode").show(egui_context.ctx_mut(), |ui| {
         if ui.button("2D mode").clicked() {
@@ -105,7 +107,13 @@ pub fn setup_ui(
                 let collision_coeff = &mut boid_settings_3d.collision_coeff;
                 ui.add(egui::Slider::new(collision_coeff, 0.0..=50.0).text("Collision"));
                 let attraction_coeff = &mut boid_settings_3d.attraction_coeff;
-                ui.add(egui::Slider::new(attraction_coeff, 0.0..=100.0).text("Attraction to target"));                
+                ui.add(egui::Slider::new(attraction_coeff, 0.0..=100.0).text("Attraction to target"));
+                let boids_size = &mut boid_settings_3d.size;
+                if ui.add(egui::Slider::new(boids_size, 0.1..=20.0).text("Boids size")).changed() {
+                    resize_event_writer.send(ResizeEvent {
+                        scale: *boids_size
+                    });
+                }
             }
             SimulationState::Underwater => {
                 return;

@@ -8,7 +8,7 @@ pub mod resources;
 pub mod bundles;
 pub mod events;
 
-use events::ApplyForceEvent;
+use events::{ApplyForceEvent, ResizeEvent};
 use resources::*;
 use systems::*;
 
@@ -20,6 +20,7 @@ impl Plugin for Boids3DPlugin {
         .insert_resource(BoidSettings3D::default())
         .insert_resource(GroupsTargets::default())
         .add_event::<ApplyForceEvent>()
+        .add_event::<ResizeEvent>()
         .add_systems(Update, (
             flocking,
             apply_forces_system,
@@ -27,6 +28,7 @@ impl Plugin for Boids3DPlugin {
             confine_movement,
             adjust_population,
             handle_camera_movement,
+            resize_boids
         ).run_if(in_state(SimulationState::Mode3D)));
     }
 }

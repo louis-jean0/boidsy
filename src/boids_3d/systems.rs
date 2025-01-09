@@ -11,13 +11,13 @@ use std::sync::Mutex;
 use crate::kd_tree_3d::components::*;
 use crate::boids_2d::components::ObstacleTag;
 
-pub const BOUNDS_SIZE: f32 = 250.0;
-pub const BOIDS_SIZE: f32 = 2.0;
+pub const BOUNDS_SIZE: f32 = 350.0;
 
 pub fn spawn_boid_entity(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
+    boid_settings: &BoidSettings3D
 ) {
     let mut rng = rand::thread_rng();
     
@@ -41,7 +41,7 @@ pub fn spawn_boid_entity(
         acceleration: Acceleration { acceleration: Vec3::ZERO },
         pbr_bundle: PbrBundle {
             mesh: meshes.add(Mesh::from(shape::UVSphere {
-                radius: BOIDS_SIZE,
+                radius: boid_settings.size,
                 ..default()
             })),
             material: materials.add(StandardMaterial {
@@ -51,7 +51,7 @@ pub fn spawn_boid_entity(
             }),
             transform: Transform {
                 translation: random_pos,
-                scale: Vec3::splat(BOIDS_SIZE * 2.0),
+                scale: Vec3::splat(boid_settings.size * 2.0),
                 ..default()
             },
             ..default()
@@ -68,7 +68,7 @@ pub fn spawn_boids(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for _ in 0..boid_settings.count {
-        spawn_boid_entity(&mut commands, &mut meshes, &mut materials);
+        spawn_boid_entity(&mut commands, &mut meshes, &mut materials, &boid_settings);
     }
 }
 
@@ -219,7 +219,7 @@ pub fn confine_movement (
     mut boid_query: Query<(&mut Transform, &mut Velocity, &mut Acceleration), With<Boid>>,
     boid_settings: Res<BoidSettings3D>
 ) {
-    let margin = BOIDS_SIZE * 0.8;
+    let margin = BOUNDS_SIZE * 0.8;
     let x_min = -BOUNDS_SIZE + margin;
     let y_min = -BOUNDS_SIZE + margin;
     let z_min = -BOUNDS_SIZE + margin;
@@ -284,7 +284,7 @@ pub fn adjust_population(
     } 
     else if current_count > previous_count {
         for _ in 0..(current_count - previous_count) {
-            spawn_boid_entity(&mut commands, &mut meshes, &mut materials);
+            spawn_boid_entity(&mut commands, &mut meshes, &mut materials, &boid_settings);
         }
     }
     else {
@@ -294,6 +294,17 @@ pub fn adjust_population(
         }
     }
     boid_settings.previous_count = current_count;
+}
+
+pub fn resize_boids(
+    mut boid_query: Query<&mut Transform, With<Boid>>,
+    mut resize_event_reader: EventReader<ResizeEvent>
+) {
+    if let Some(ev) = resize_event_reader.read().last() {
+        for mut transform in boid_query.iter_mut() {
+            transform.scale = Vec3::splat(ev.scale);
+        }
+    }
 }
 
 pub fn spawn_obstacle_3d(

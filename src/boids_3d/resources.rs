@@ -5,6 +5,7 @@ use super::BOUNDS_SIZE;
 pub struct BoidSettings3D {
     pub count: usize,
     pub previous_count: usize,
+    pub size: f32,
     pub cohesion_range: f32,
     pub alignment_range: f32,
     pub separation_range: f32,
@@ -25,6 +26,7 @@ impl Default for BoidSettings3D {
         BoidSettings3D {
             count: 50,
             previous_count: 50,
+            size: 2.0,
             cohesion_range: 50.0,
             alignment_range: 30.0,
             separation_range: 20.0,
