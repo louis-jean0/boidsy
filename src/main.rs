@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy::render::settings::WgpuSettings;
+use bevy::render::RenderPlugin;
 use bevy::window::{PrimaryWindow, WindowResolution};
 use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy_egui::*;
@@ -41,7 +43,8 @@ fn main() {
                 ..default()
             }),
             ..default()
-        }))
+        },
+        ))
         .add_plugins(EguiPlugin)
         .add_plugins((
             KDTree2DPlugin,

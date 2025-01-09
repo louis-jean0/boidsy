@@ -24,9 +24,9 @@ pub struct BoidSettings3D {
 impl Default for BoidSettings3D {
     fn default() -> Self {
         BoidSettings3D {
-            count: 50,
-            previous_count: 50,
-            size: 2.0,
+            count: 2000,
+            previous_count: 2000,
+            size: 1.0,
             cohesion_range: 50.0,
             alignment_range: 30.0,
             separation_range: 20.0,
@@ -35,8 +35,8 @@ impl Default for BoidSettings3D {
             alignment_coeff: 5.0,
             separation_coeff: 20.0,
             collision_coeff: 24.0,
-            min_speed: 100.0,
-            max_speed: 500.0,
+            min_speed: 50.0,
+            max_speed: 300.0,
             bounce_against_walls: true,
             attraction_coeff: 1.0,
             field_of_view: 90.0
