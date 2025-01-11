@@ -14,6 +14,15 @@ use crate::boids_2d::components::ObstacleTag;
 
 pub const BOUNDS_SIZE: f32 = 350.0;
 
+const GROUP_COLORS: [Color; 2] = [
+    Color::rgb(0.9, 0.3, 0.3),
+    Color::rgb(0.3, 0.3, 0.9)
+];
+const GROUP_EMISSIVE: [Color; 2] = [
+    Color::rgba(0.5, 0.0, 0.0, 0.5),
+    Color::rgba(0.0, 0.0, 0.5, 0.5)
+];
+
 pub fn spawn_boid_entity(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -21,11 +30,12 @@ pub fn spawn_boid_entity(
     boid_settings: &BoidSettings3D
 ) {
     let mut rng = rand::thread_rng();
+    let group = rng.gen_range(0..2);
     
     let random_pos = Vec3::new(
         rng.gen_range(-50.0..50.0),
         rng.gen_range(-50.0..50.0),
-        rng.gen_range(-50.0..50.0),
+        rng.gen_range(-50.0..50.0)
     );
     
     let theta = rng.gen_range(0.0..2.0 * PI);
@@ -33,11 +43,11 @@ pub fn spawn_boid_entity(
     let initial_velocity = Vec3::new(
         f32::sin(phi) * f32::cos(theta),
         f32::sin(phi) * f32::sin(theta),
-        f32::cos(phi),
+        f32::cos(phi)
     );
 
     commands.spawn(BoidBundle {
-        boid: Boid { group: rng.gen_range(0..2) },
+        boid: Boid { group },
         velocity: Velocity { velocity: initial_velocity },
         acceleration: Acceleration { acceleration: Vec3::ZERO },
         pbr_bundle: PbrBundle {
@@ -46,8 +56,8 @@ pub fn spawn_boid_entity(
                 ..default()
             })),
             material: materials.add(StandardMaterial {
-                base_color: Color::rgb(0.9, 0.3, 0.3),
-                emissive: Color::rgba(0.5, 0.0, 0.0, 0.5),
+                base_color: GROUP_COLORS[group as usize],
+                emissive: GROUP_EMISSIVE[group as usize],
                 ..default()
             }),
             transform: Transform {
@@ -78,7 +88,7 @@ pub fn flocking(
     event_writer: EventWriter<ApplyForceEvent>,
     boid_settings: Res<BoidSettings3D>,
     groups_targets: Res<GroupsTargets>,
-    kd_tree: Res<NNTree3D>
+    kd_tree: Res<NNTree3D>,
 ) {
     let cohesion_range = boid_settings.cohesion_range;
     let alignment_range = boid_settings.alignment_range;
@@ -93,7 +103,10 @@ pub fn flocking(
         let mut alignment_neighbors: Vec<Vec3> = Vec::new();
 
         for (_, neighbor_entity) in kd_tree.within_distance(position, cohesion_range) {
-            if let Ok((_, neighbor_transform, neighbor_velocity, _)) = boid_query.get(neighbor_entity.unwrap()) {
+            let neighbor_entity = neighbor_entity.unwrap();
+            if neighbor_entity == entity { continue; }
+
+            if let Ok((_, neighbor_transform, neighbor_velocity, _)) = boid_query.get(neighbor_entity) {
                 let neighbor_pos = neighbor_transform.translation;
                 if let Some(distance) = is_in_field_of_view(&position, &velocity.velocity, &neighbor_pos, &boid_settings.field_of_view) {
                     if distance < separation_range {
@@ -106,6 +119,7 @@ pub fn flocking(
                 }
             }
         }
+
         let cohesion_force = cohesion(&position, &cohesion_neighbors, &boid_settings.cohesion_coeff);
         let separation_force = separation(&position, &repulsion_neighbors, &boid_settings.separation_coeff);
         let alignment_force = alignment(&velocity.velocity, &alignment_neighbors, &boid_settings.alignment_coeff);
@@ -205,11 +219,8 @@ pub fn update_boid_position(
         transform.translation += velocity.velocity * time.delta_seconds();
         
         if velocity.velocity.length_squared() > 0.0 {
-            let up = Vec3::Y;
-            let forward = velocity.velocity.normalize();
-            let right = forward.cross(up).normalize();
-            let up = right.cross(forward);
-            transform.rotation = Quat::from_mat3(&Mat3::from_cols(right, up, -forward));
+            let forward = -velocity.velocity.normalize();
+            transform.rotation = Quat::from_rotation_arc(Vec3::Z, forward);
         }
 
         acceleration.acceleration = Vec3::ZERO;
