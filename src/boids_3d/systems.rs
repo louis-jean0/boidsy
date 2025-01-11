@@ -7,6 +7,7 @@ use crate::boids_3d::components::*;
 use crate::boids_3d::resources::*;
 use crate::boids_3d::bundles::*;
 use crate::boids_3d::events::*;
+use crate::boids_3d::cone::Cone;
 use std::sync::Mutex;
 use crate::kd_tree_3d::components::*;
 use crate::boids_2d::components::ObstacleTag;
@@ -40,7 +41,7 @@ pub fn spawn_boid_entity(
         velocity: Velocity { velocity: initial_velocity },
         acceleration: Acceleration { acceleration: Vec3::ZERO },
         pbr_bundle: PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::UVSphere {
+            mesh: meshes.add(Mesh::from(Cone {
                 radius: boid_settings.size,
                 ..default()
             })),
@@ -219,7 +220,7 @@ pub fn confine_movement (
     mut boid_query: Query<(&mut Transform, &mut Velocity, &mut Acceleration), With<Boid>>,
     boid_settings: Res<BoidSettings3D>
 ) {
-    let margin = BOUNDS_SIZE * 0.8;
+    let margin = BOUNDS_SIZE * 0.2;
     let x_min = -BOUNDS_SIZE + margin;
     let y_min = -BOUNDS_SIZE + margin;
     let z_min = -BOUNDS_SIZE + margin;
@@ -228,8 +229,7 @@ pub fn confine_movement (
     let z_max = BOUNDS_SIZE - margin;
     for (mut transform, mut velocity, _) in boid_query.iter_mut() {
         if boid_settings.bounce_against_walls {
-            let turn_factor: f32 = 20.0;
-            let margin = BOUNDS_SIZE / 2.0;
+            let turn_factor: f32 = 10.0;
             if transform.translation.x > x_max - margin {
                 velocity.velocity.x -= turn_factor;
             }

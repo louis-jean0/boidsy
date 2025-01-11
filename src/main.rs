@@ -1,6 +1,4 @@
 use bevy::prelude::*;
-use bevy::render::settings::WgpuSettings;
-use bevy::render::RenderPlugin;
 use bevy::window::{PrimaryWindow, WindowResolution};
 use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy_egui::*;

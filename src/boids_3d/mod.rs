@@ -7,6 +7,7 @@ pub mod systems;
 pub mod resources;
 pub mod bundles;
 pub mod events;
+pub mod cone;
 
 use events::{ApplyForceEvent, ResizeEvent};
 use resources::*;
