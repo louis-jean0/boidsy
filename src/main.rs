@@ -25,7 +25,6 @@ use crate::boids_2d::components::Mode2DMarker;
 use crate::boids_3d::components::Mode3DMarker;
 use crate::boids_2d::resources::BoidSettings2D;
 use crate::boids_3d::resources::BoidSettings3D;
-use crate::underwater::setup_underwater_scene;
 
 pub const WINDOW_WIDTH: f32 = 1920.0;
 pub const WINDOW_HEIGHT: f32 = 1080.0;
@@ -55,7 +54,6 @@ fn main() {
         ))
         .add_systems(OnEnter(SimulationState::Mode2D), setup_2d_mode)
         .add_systems(OnEnter(SimulationState::Mode3D), setup_3d_mode)
-        .add_systems(OnEnter(SimulationState::Underwater), setup_underwater_scene)
         .add_systems(OnExit(SimulationState::Mode2D), cleanup_2d_mode)
         .add_systems(OnExit(SimulationState::Mode3D), cleanup_3d_mode)
         .run();
@@ -89,6 +87,7 @@ fn setup_3d_mode(
             transform: Transform::from_xyz(-100.0, BOUNDS_SIZE * 2.0, -100.0)
                 .looking_at(Vec3::ZERO, Vec3::Y),
             camera: Camera {
+                order: 0,
                 ..default()
             },
             camera_3d: Camera3d {
@@ -97,23 +96,14 @@ fn setup_3d_mode(
             },
             ..default()
         },
-        Mode3DMarker,
+        Mode3DMarker
     ));
     
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
         brightness: 1.0,
-    });
-    
-    commands.spawn(DirectionalLightBundle {
-        directional_light: DirectionalLight {
-            illuminance: 20000.0,
-            shadows_enabled: true,
-            ..default()
-        },
-        transform: Transform::from_xyz(0.0, 50.0, 0.0).looking_at(Vec3::ZERO, Vec3::Z),
-        ..default()
-    });
+    }
+    );
 
     crate::boids_3d::systems::setup_3d_scene(&mut commands, &mut meshes, &mut materials);
     boids_3d::systems::spawn_boids(commands, boid_settings, meshes, materials);

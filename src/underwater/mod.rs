@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{core_pipeline::clear_color::ClearColorConfig, prelude::*};
 
 mod submarine;
 mod terrain;
@@ -7,6 +7,8 @@ mod environment;
 use submarine::SubmarinePlugin;
 use terrain::TerrainPlugin;
 use environment::EnvironmentPlugin;
+
+use crate::{cleanup_3d_mode, ui::resources::SimulationState};
 
 #[derive(States, Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 pub enum UnderwaterState {
@@ -25,8 +27,10 @@ impl Plugin for UnderwaterPlugin {
                TerrainPlugin,
                EnvironmentPlugin,
            ))
-           .add_systems(OnEnter(UnderwaterState::Enabled), setup_underwater_scene)
-           .add_systems(OnExit(UnderwaterState::Enabled), cleanup_underwater_scene);
+           .add_systems(OnEnter(SimulationState::Underwater), (
+            setup_underwater_scene,
+            cleanup_3d_mode))
+           .add_systems(OnExit(SimulationState::Underwater), cleanup_underwater_scene);
     }
 }
 
@@ -34,11 +38,22 @@ impl Plugin for UnderwaterPlugin {
 pub struct UnderwaterMarker;
 
 pub fn setup_underwater_scene(mut commands: Commands) {
-    // Initial scene setup
-    commands.insert_resource(AmbientLight {
-        color: Color::rgb(0.1, 0.1, 0.3),
-        brightness: 0.3,
-    });
+    commands.spawn((
+        Camera3dBundle {
+            transform: Transform::from_xyz(-100.0, 2.0, -100.0)
+                .looking_at(Vec3::ZERO, Vec3::Y),
+            camera: Camera {
+                order: 1,
+                ..default()
+            },
+            camera_3d: Camera3d {
+                clear_color: ClearColorConfig::Custom(Color::rgb(0.1, 0.1, 0.5)),
+                ..default()
+            },
+            ..default()
+        },
+        UnderwaterMarker
+    ));
 }
 
 fn cleanup_underwater_scene(

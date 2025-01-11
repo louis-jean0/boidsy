@@ -103,7 +103,9 @@ pub fn handle_camera_control(
     mut camera_control: ResMut<CameraControlState>,
     simulation_state: Res<State<SimulationState>>,
 ) {
-    if *simulation_state.get() != SimulationState::Mode3D { return; }
+    if *simulation_state.get() != SimulationState::Mode3D && *simulation_state.get() != SimulationState::Underwater {
+        return;
+    }
 
     if keyboard.just_pressed(KeyCode::E) {
         let mut window = windows.single_mut();
@@ -132,7 +134,7 @@ pub fn handle_camera_movement(
     
     for ev in mouse_motion.read() {
         settings.pitch = (settings.pitch - ev.delta.y * settings.sensitivity)
-            .clamp(-1.54, 1.54); // Roughly PI/2
+            .clamp(-1.54, 1.54);
         settings.yaw -= ev.delta.x * settings.sensitivity;
     }
 

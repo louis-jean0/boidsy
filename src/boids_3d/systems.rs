@@ -354,15 +354,18 @@ pub fn setup_3d_scene(
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
 ) {
-    commands.spawn(DirectionalLightBundle {
-        directional_light: DirectionalLight {
-            shadows_enabled: true,
-            illuminance: 10000.0,
+    commands.spawn((
+        DirectionalLightBundle {
+            directional_light: DirectionalLight {
+                shadows_enabled: true,
+                illuminance: 10000.0,
+                ..default()
+            },
+            transform: Transform::from_xyz(50.0, 50.0, 50.0).looking_at(Vec3::ZERO, Vec3::Y),
             ..default()
         },
-        transform: Transform::from_xyz(50.0, 50.0, 50.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+        Mode3DMarker
+    ));
 
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
@@ -388,6 +391,7 @@ pub fn setup_3d_scene(
         transform: Transform::from_xyz(0.0, 0.1, 0.0),
         ..default()
     },
+    Mode3DMarker,
     NotShadowCaster,
     NotShadowReceiver
     ));
@@ -397,10 +401,12 @@ pub fn setup_3d_scene(
         ..default()
     });
 
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane::from_size(BOUNDS_SIZE * 4.0))),
-        material: ground_material,
-        transform: Transform::from_xyz(0.0, -BOUNDS_SIZE, 0.0),
-        ..default()
-    });
+    commands.spawn((
+        PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Plane::from_size(BOUNDS_SIZE * 4.0))),
+            material: ground_material,
+            transform: Transform::from_xyz(0.0, -BOUNDS_SIZE, 0.0),
+            ..default()
+        },
+        Mode3DMarker));
 }
