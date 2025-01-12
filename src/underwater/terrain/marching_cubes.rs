@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-// Corners of a cube
 pub const CORNERS: [(f32, f32, f32); 8] = [
     (0.0, 0.0, 0.0), // 0
     (1.0, 0.0, 0.0), // 1
@@ -12,7 +11,6 @@ pub const CORNERS: [(f32, f32, f32); 8] = [
     (0.0, 1.0, 1.0), // 7
 ];
 
-// Edges of a cube
 pub const EDGES: [(usize, usize); 12] = [
     (0, 1), (1, 2), (2, 3), (3, 0),  // bottom face
     (4, 5), (5, 6), (6, 7), (7, 4),  // top face
@@ -72,5 +70,4 @@ pub fn generate_vertices(points: &[Vec3; 8], values: &[f32; 8], isolevel: f32) -
     vertices
 }
 
-// Include the standard marching cubes lookup tables
 include!("marching_cubes_tables.rs");

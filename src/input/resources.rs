@@ -8,7 +8,7 @@ pub struct ShapeSettings {
 impl Default for ShapeSettings {
     fn default() -> Self {
         ShapeSettings {
-            radius: 10.,
+            radius: 50.0,
         }
     }
 }

@@ -115,16 +115,13 @@ fn generate_chunk(
     let mut density = DensityField::new(UVec3::new(CHUNK_SIZE + CHUNK_OVERLAP, CHUNK_SIZE + CHUNK_OVERLAP, CHUNK_SIZE + CHUNK_OVERLAP));
     let perlin = Perlin::new(1);
     
-    // Fill density field with perlin noise
     for x in 0..=CHUNK_SIZE {
         for y in 0..=CHUNK_SIZE {
             for z in 0..=CHUNK_SIZE {
-                // Convert to world coordinates for continuous noise
                 let world_x = (x as f64 + (chunk_position.x * CHUNK_SIZE as i32) as f64) / CHUNK_SIZE as f64;
                 let world_y = y as f64 / CHUNK_SIZE as f64;
                 let world_z = (z as f64 + (chunk_position.z * CHUNK_SIZE as i32) as f64) / CHUNK_SIZE as f64;
 
-                // Add more noise layers for detail
                 let base_height = y as f64 / CHUNK_SIZE as f64;
                 
                 // Large features (caves and mountains)
