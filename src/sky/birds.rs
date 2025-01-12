@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 use bevy_spatial::SpatialAccess;
 use rand::Rng;
 use crate::boids_2d::components::ObstacleTag;
@@ -73,7 +74,8 @@ impl Plugin for BirdsPlugin {
                 adjust_population_birds,
                 resize_boids,
                 avoid_obstacles,
-                confine_birds_movement
+                confine_birds_movement,
+                handle_mouse_input, // Add this system
            ).run_if(in_state(SimulationState::Sky)));
     }
 }
@@ -205,7 +207,7 @@ pub fn confine_birds_movement (
 ) {
     let margin = BOUNDS_SIZE * 0.2;
     let x_min = -BOUNDS_SIZE + margin;
-    let y_min = -25.0 + margin;
+    let y_min = margin;
     let z_min = -BOUNDS_SIZE + margin;
     let x_max = BOUNDS_SIZE - margin;
     let y_max = 75.0 - margin;
@@ -308,4 +310,51 @@ pub fn avoid_obstacles(
             force: avoidance_force
         });
     }
+}
+
+fn handle_mouse_input(
+    mouse_buttons: Res<Input<MouseButton>>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    windows: Query<&Window, With<PrimaryWindow>>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+) {
+    if mouse_buttons.just_pressed(MouseButton::Left) {
+        if let Some(position) = get_mouse_world_position(&windows, &camera_query) {
+            let obstacle_material = materials.add(StandardMaterial {
+                base_color: Color::rgb(0.8, 0.2, 0.2),
+                metallic: 0.0,
+                perceptual_roughness: 0.9,
+                ..default()
+            });
+
+            commands.spawn((
+                PbrBundle {
+                    mesh: meshes.add(Mesh::from(shape::Cube { size: 50.0 })),
+                    material: obstacle_material,
+                    transform: Transform::from_translation(position),
+                    ..default()
+                },
+                ObstacleTag,
+            ));
+        }
+    }
+}
+
+fn get_mouse_world_position(
+    windows: &Query<&Window, With<PrimaryWindow>>,
+    camera_query: &Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+) -> Option<Vec3> {
+    let window = windows.get_single().ok()?;
+    let (camera, camera_transform) = camera_query.get_single().ok()?;
+
+    let cursor_position = window.cursor_position()?;
+    let window_size = Vec2::new(window.width() as f32, window.height() as f32);
+    let ndc = (cursor_position / window_size) * 2.0 - Vec2::ONE;
+
+    let ndc_to_world = camera_transform.compute_matrix() * camera.projection_matrix().inverse();
+    let world_position = ndc_to_world.project_point3(ndc.extend(-1.0));
+
+    Some(world_position)
 }

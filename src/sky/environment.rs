@@ -26,7 +26,7 @@ fn setup_environment(
         PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Box::new(BOUNDS_SIZE, 1.0, BOUNDS_SIZE))),
             material: platform_material.clone(),
-            transform: Transform::from_xyz(0.0, -50.0, 0.0),
+            transform: Transform::from_xyz(0.0, -100.0, 0.0),
             ..default()
         },
         SkySceneMarker,
@@ -53,7 +53,7 @@ fn setup_environment(
     let angle_increment = std::f32::consts::PI * 0.125; // Adjust the angle increment for more dispersion
     let base_height = -50.0; // Base height to ensure islands are above the ground plane
 
-    for i in 0..20 {
+    for i in 0..50 {
         let angle = i as f32 * angle_increment;
         let radius = base_radius + (i as f32 * 10.0).sin() * 40.0; // Increase the base radius and variation
         let height = base_height + 20.0 + (i as f32 * 1.5).sin() * 100.0; // Ensure height is above -50

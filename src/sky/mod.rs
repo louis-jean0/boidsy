@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{core_pipeline::clear_color::ClearColorConfig, prelude::*};
 use crate::{input::handle_camera_movement, ui::resources::SimulationState};
 
 pub mod environment;
@@ -34,6 +34,10 @@ pub fn setup_sky_scene(
                 .looking_at(Vec3::ZERO, Vec3::Y),
             camera: Camera {
                 order: 2,
+                ..default()
+            },
+            camera_3d: Camera3d {
+                clear_color: ClearColorConfig::Custom(Color::rgb(0.3, 0.1, 0.6)),
                 ..default()
             },
             ..default()
