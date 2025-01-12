@@ -104,8 +104,9 @@ pub fn handle_camera_control(
     mut windows: Query<&mut Window, With<PrimaryWindow>>,
     keyboard: Res<Input<KeyCode>>,
     mut camera_control: ResMut<CameraControlState>,
-    simulation_state: Res<State<SimulationState>>,
+    simulation_state: Res<State<SimulationState>>
 ) {
+
     if *simulation_state.get() != SimulationState::Mode3D && *simulation_state.get() != SimulationState::Underwater && *simulation_state.get() != SimulationState::Sky {
         return;
     }
@@ -130,9 +131,10 @@ pub fn handle_camera_movement(
     mut mouse_motion: EventReader<MouseMotion>,
     mut settings: ResMut<MouseSettings>,
     mut query: Query<&mut Transform, With<Camera3d>>,
-    camera_control_state: ResMut<CameraControlState>
+    camera_control_state: ResMut<CameraControlState>,
+    simulation_state: Res<State<SimulationState>>
 ) {
-    if !camera_control_state.is_active {return;}
+    if !camera_control_state.is_active || *simulation_state.get() == SimulationState::Underwater {return;}
     let Ok(mut transform) = query.get_single_mut() else { return };
     
     for ev in mouse_motion.read() {

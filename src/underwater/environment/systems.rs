@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rand::prelude::*;
 use super::components::*;
-use crate::underwater::UnderwaterMarker;
+use crate::underwater::{UnderwaterMarker, submarine::components::Submarine};
 
 pub fn setup_environment(
     mut commands: Commands
@@ -16,25 +16,25 @@ pub fn spawn_particles(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut effect: ResMut<UnderwaterEffect>,
     time: Res<Time>,
-    camera: Query<&Transform, With<Camera>>,
+    submarine_query: Query<&Transform, With<Submarine>>,
 ) {
     effect.particle_spawn_timer.tick(time.delta());
 
     if effect.particle_spawn_timer.just_finished() {
-        if let Ok(camera_transform) = camera.get_single() {
+        if let Ok(submarine_transform) = submarine_query.get_single() {
             let mut rng = rand::thread_rng();
             
-            let spawn_position = camera_transform.translation + camera_transform.forward()
-                + Vec3::new(
-                    rng.gen_range(-5.0..5.0),
-                    rng.gen_range(-5.0..5.0),
-                    rng.gen_range(-5.0..5.0),
-                );
+            // Spawn bubbles around the submarine
+            let spawn_position = submarine_transform.translation + Vec3::new(
+                rng.gen_range(-5.0..5.0),
+                rng.gen_range(-2.0..0.0),
+                rng.gen_range(-5.0..5.0),
+            );
 
             commands.spawn((
                 PbrBundle {
                     mesh: meshes.add(Mesh::from(shape::UVSphere { 
-                        radius: rng.gen_range(0.01..0.1),
+                        radius: rng.gen_range(0.05..0.15),  // Slightly larger bubbles
                         ..default()
                     })),
                     material: materials.add(StandardMaterial {
@@ -48,10 +48,10 @@ pub fn spawn_particles(
                 Bubble {
                     velocity: Vec3::new(
                         rng.gen_range(-0.5..0.5),
-                        rng.gen_range(1.0..2.0),
+                        rng.gen_range(2.0..4.0),  // Faster upward movement
                         rng.gen_range(-0.5..0.5),
                     ),
-                    lifetime: Timer::from_seconds(rng.gen_range(3.0..6.0), TimerMode::Once),
+                    lifetime: Timer::from_seconds(rng.gen_range(2.0..4.0), TimerMode::Once),
                 },
                 UnderwaterMarker,
             ));

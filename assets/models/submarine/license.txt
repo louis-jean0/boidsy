@@ -1,0 +1,11 @@
+Model Information:
+* title:	Submarine Low-poly
+* source:	https://sketchfab.com/3d-models/submarine-low-poly-245af7dde0cd4add9f7e11db3bbbccba
+* author:	Natali_Voitova (https://sketchfab.com/Natali_Voitova)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Submarine Low-poly" (https://sketchfab.com/3d-models/submarine-low-poly-245af7dde0cd4add9f7e11db3bbbccba) by Natali_Voitova (https://sketchfab.com/Natali_Voitova) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

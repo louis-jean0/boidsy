@@ -23,18 +23,66 @@ pub fn generate_terrain_chunks(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // Create ground plane first
-    let ground_size = 10000.0;//TERRAIN_SCALE * (CHUNK_RANGE as f32 * 2.0 + 1.0);
+    // Create bumpy ground plane with adjusted size
+    let size = 500.0; // Match terrain size plus small overlap
+    let divisions = 2000; // Keep reasonable vertex count
+    let bump_height = 15.0;
+    let perlin = Perlin::new(3); // Different seed from terrain
+    
+    let mut vertices = Vec::new();
+    let mut indices = Vec::new();
+
+    // Generate vertices in a grid
+    for z in 0..=divisions {
+        for x in 0..=divisions {
+            let px = x as f32 / divisions as f32;
+            let pz = z as f32 / divisions as f32;
+
+            // Multiple noise frequencies for more natural look
+            let noise1 = perlin.get([px as f64 * 3.0, pz as f64 * 3.0]) as f32;
+            let noise2 = perlin.get([px as f64 * 6.0, pz as f64 * 6.0]) as f32 * 0.5;
+            let height = (noise1 + noise2) * bump_height;
+
+            vertices.push([
+                (px - 0.5) * size,
+                height + GROUND_Y_POSITION,
+                (pz - 0.5) * size,
+            ]);
+        }
+    }
+
+    // Generate indices
+    for z in 0..divisions {
+        for x in 0..divisions {
+            let tl = z * (divisions + 1) + x;
+            let tr = tl + 1;
+            let bl = (z + 1) * (divisions + 1) + x;
+            let br = bl + 1;
+
+            indices.extend_from_slice(&[
+                tl as u32, bl as u32, tr as u32,
+                tr as u32, bl as u32, br as u32,
+            ]);
+        }
+    }
+
+    let normals = calculate_normals(&vertices, &indices);
+
+    let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
+    mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+    mesh.set_indices(Some(Indices::U32(indices)));
+
     commands.spawn((
         PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Plane::from_size(ground_size))),
+            mesh: meshes.add(mesh),
             material: materials.add(StandardMaterial {
                 base_color: DEEP_COLOR,
+                metallic: 0.2,
                 perceptual_roughness: 0.9,
-                metallic: 0.1,
                 ..default()
             }),
-            transform: Transform::from_xyz(0.0, GROUND_Y_POSITION, 0.0),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0),
             ..default()
         },
         UnderwaterMarker,
