@@ -25,8 +25,8 @@ pub fn setup_submarine(
         parent.spawn(SpotLightBundle {
             spot_light: SpotLight {
                 color: Color::rgb(1.0, 0.95, 0.8),
-                intensity: 4000.0,
-                range: 80.0,
+                intensity: 40000.0,
+                range: 100.0,
                 outer_angle: 0.8,  // Wider angle
                 inner_angle: 0.6,  // Softer inner cone
                 shadows_enabled: true,
@@ -56,14 +56,14 @@ pub fn setup_submarine(
             },
             ..default()
         },
-        // FogSettings {
-        //     color: Color::rgb(0.25, 0.25, 0.75),
-        //     falloff: FogFalloff::Linear { 
-        //         start: 20.0, 
-        //         end: 200.0 
-        //     },
-        //     ..default()
-        // },
+        FogSettings {
+            color: Color::rgb(0.25, 0.25, 0.75),
+            falloff: FogFalloff::Linear { 
+                start: 30.0, 
+                end: 200.0 
+            },
+            ..default()
+        },
         SubmarineCamera::default(),
         UnderwaterMarker,
         ObstacleTag

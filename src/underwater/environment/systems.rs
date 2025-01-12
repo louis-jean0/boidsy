@@ -10,7 +10,7 @@ pub fn setup_environment(
 
     commands.insert_resource(AmbientLight {
         color: Color::rgb(0.1, 0.2, 0.3),
-        brightness: 0.3,
+        brightness: 0.1,
     });
 }
 
@@ -38,7 +38,7 @@ pub fn spawn_particles(
             commands.spawn((
                 PbrBundle {
                     mesh: meshes.add(Mesh::from(shape::UVSphere { 
-                        radius: rng.gen_range(0.05..0.15),  // Slightly larger bubbles
+                        radius: rng.gen_range(0.05..0.15),
                         ..default()
                     })),
                     material: materials.add(StandardMaterial {
@@ -76,13 +76,11 @@ pub fn update_bubbles(
             continue;
         }
 
-        // Add some wavey motion
         bubble.velocity.x += (time.elapsed_seconds() * 2.0).sin() * 0.01;
         bubble.velocity.z += (time.elapsed_seconds() * 2.0).cos() * 0.01;
         
         transform.translation += bubble.velocity * time.delta_seconds();
 
-        // Fade out near end of lifetime
         if let Some(material) = materials.get_mut(material_handle) {
             let alpha = (bubble.lifetime.percent() * 0.3).min(0.3);
             material.base_color.set_a(alpha);

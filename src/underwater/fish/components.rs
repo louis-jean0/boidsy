@@ -57,22 +57,22 @@ impl Species {
     pub fn get_settings(&self) -> UnderwaterBoidSettings {
         match self {
             Species::SmallFish => UnderwaterBoidSettings(BoidSettings3D {
-                count: 200,
+                count: 150,
                 size: 10.0,
                 min_speed: 30.0,
-                max_speed: 300.0,
+                max_speed: 150.0,
                 ..default()
             }),
             Species::MediumFish => UnderwaterBoidSettings(BoidSettings3D {
-                count: 100,
-                size: 0.1,
+                count: 30,
+                size: 5.0,
                 min_speed: 20.0,
-                max_speed: 100.0,
+                max_speed: 75.0,
                 ..default()
             }),
             Species::LargeFish => UnderwaterBoidSettings(BoidSettings3D {
-                count: 50,
-                size: 10.0,
+                count: 10,
+                size: 1.0,
                 min_speed: 20.0,
                 max_speed: 50.0,
                 ..default()

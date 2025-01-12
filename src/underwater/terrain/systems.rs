@@ -8,39 +8,35 @@ use noise::{NoiseFn, Perlin};
 use super::marching_cubes::{generate_vertices, CORNERS};
 
 // Adjust colors for better contrast
-const DEEP_COLOR: Color = Color::rgb(0.1, 0.2, 0.4);    // Darker blue for deep areas
-const MID_COLOR: Color = Color::rgb(0.2, 0.5, 0.4);     // Green-blue for middle
-const HIGH_COLOR: Color = Color::rgb(0.8, 0.6, 0.1);    // Lighter green for peaks
+const DEEP_COLOR: Color = Color::rgb(0.1, 0.2, 0.4);
+const MID_COLOR: Color = Color::rgb(0.2, 0.5, 0.4);
+const HIGH_COLOR: Color = Color::rgb(0.8, 0.6, 0.1);
 
-const ISOLEVEL: f32 = 0.7; // Lowered to create more solid terrain
+const ISOLEVEL: f32 = 0.7;
 pub const TERRAIN_SIZE: f32 = 500.0;
 pub const TERRAIN_SCALE: f32 = 75.0;
-const TERRAIN_HEIGHT_SCALE: f32 = 1.0; // Increased for more dramatic height variation
-const CHUNK_RANGE: i32 = 2; // How many chunks in each direction
-const GROUND_Y_POSITION: f32 = -30.0; // Match this with the terrain transform y position
-const CHUNK_OVERLAP: u32 = 1; // Add overlap to eliminate seams
+const TERRAIN_HEIGHT_SCALE: f32 = 1.0;
+const CHUNK_RANGE: i32 = 2;
+pub const GROUND_Y_POSITION: f32 = -30.0;
+const CHUNK_OVERLAP: u32 = 1;
 
 pub fn generate_terrain_chunks(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // Create bumpy ground plane with adjusted size
-    let size = TERRAIN_SIZE; // Match terrain size plus small overlap
-    let divisions = 2000; // Keep reasonable vertex count
+    let size = TERRAIN_SIZE;
+    let divisions = 2000;
     let bump_height = 15.0;
-    let perlin = Perlin::new(3); // Different seed from terrain
-    
+    let perlin = Perlin::new(3);
     let mut vertices = Vec::new();
     let mut indices = Vec::new();
 
-    // Generate vertices in a grid
     for z in 0..=divisions {
         for x in 0..=divisions {
             let px = x as f32 / divisions as f32;
             let pz = z as f32 / divisions as f32;
 
-            // Multiple noise frequencies for more natural look
             let noise1 = perlin.get([px as f64 * 3.0, pz as f64 * 3.0]) as f32;
             let noise2 = perlin.get([px as f64 * 6.0, pz as f64 * 6.0]) as f32 * 0.5;
             let height = (noise1 + noise2) * bump_height;
@@ -53,7 +49,6 @@ pub fn generate_terrain_chunks(
         }
     }
 
-    // Generate indices
     for z in 0..divisions {
         for x in 0..divisions {
             let tl = z * (divisions + 1) + x;
@@ -168,11 +163,9 @@ fn generate_chunk(
                     overhang_bias
                 ) as f32;
 
-                // Sharp edges by applying a curve to the noise
                 let sharpness = 5.0;
                 let value = (combined_noise * sharpness).tanh() * 0.5 + 0.5;
                 
-                // Height-based density falloff
                 let height_falloff = (base_height as f32 * 0.8).powf(2.0);
                 
                 let final_value = value - height_falloff;
@@ -186,7 +179,6 @@ fn generate_chunk(
     let (vertices, indices) = generate_mesh(&density);
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     
-    // Scale and position vertices for this chunk, accounting for overlap
     let scaled_vertices: Vec<[f32; 3]> = vertices.iter()
         .map(|[x, y, z]| {
             let chunk_x = chunk_position.x as f32 * CHUNK_SIZE as f32;
@@ -199,18 +191,13 @@ fn generate_chunk(
         })
         .collect();
 
-    // Generate colors based on height
     let colors: Vec<[f32; 4]> = scaled_vertices.iter()
         .map(|[_, y, _]| {
-            // Normalize height to 0-1 range, adjusted for better distribution
             let normalized_height = (*y / (TERRAIN_SCALE * TERRAIN_HEIGHT_SCALE) + 0.5).clamp(0.0, 1.0);
             
-            // Adjust thresholds for better separation
             if normalized_height < 0.7 {
-                // Deep water areas (40% of height range)
                 DEEP_COLOR.as_rgba_f32()
             } else if normalized_height < 0.9 {
-                // Mid-level areas (30% of height range)
                 let t = (normalized_height - 0.4) / 0.3;
                 Color::rgb(
                     lerp(DEEP_COLOR.r(), MID_COLOR.r(), t),
@@ -218,7 +205,6 @@ fn generate_chunk(
                     lerp(DEEP_COLOR.b(), MID_COLOR.b(), t),
                 ).as_rgba_f32()
             } else {
-                // High areas (30% of height range)
                 let t = (normalized_height - 0.7) / 0.3;
                 Color::rgb(
                     lerp(MID_COLOR.r(), HIGH_COLOR.r(), t),
@@ -235,7 +221,6 @@ fn generate_chunk(
     mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
     mesh.set_indices(Some(Indices::U32(indices)));
 
-    // Update material to use vertex colors
     commands.spawn((
         PbrBundle {
             mesh: meshes.add(mesh),

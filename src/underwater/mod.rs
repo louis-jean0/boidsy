@@ -23,33 +23,13 @@ impl Plugin for UnderwaterPlugin {
                EnvironmentPlugin,
                FishPlugin,
            ))
-           .add_systems(OnEnter(SimulationState::Underwater), (
-            setup_underwater_scene,
-            cleanup_3d_mode))
+           .add_systems(OnEnter(SimulationState::Underwater), cleanup_3d_mode)
            .add_systems(OnExit(SimulationState::Underwater), cleanup_underwater_scene);
     }
 }
 
 #[derive(Component)]
 pub struct UnderwaterMarker;
-
-pub fn setup_underwater_scene(
-    mut commands: Commands
-) {
-
-    commands.spawn((
-        DirectionalLightBundle {
-            transform: Transform::from_xyz(0.0, 100.0, 0.0),
-            directional_light: DirectionalLight {
-                color: Color::WHITE,
-                illuminance: 10000.0,
-                ..default()
-            },
-            ..default()
-        },
-        UnderwaterMarker
-    ));
-}
 
 fn cleanup_underwater_scene(
     mut commands: Commands,
