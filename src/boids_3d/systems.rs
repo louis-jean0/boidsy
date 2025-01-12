@@ -46,30 +46,31 @@ pub fn spawn_boid_entity(
         f32::cos(phi)
     );
 
-    commands.spawn(BoidBundle {
-        boid: Boid { group },
-        velocity: Velocity { velocity: initial_velocity },
-        acceleration: Acceleration { acceleration: Vec3::ZERO },
-        pbr_bundle: PbrBundle {
-            mesh: meshes.add(Mesh::from(Cone {
-                radius: boid_settings.size,
-                ..default()
-            })),
-            material: materials.add(StandardMaterial {
-                base_color: GROUP_COLORS[group as usize],
-                emissive: GROUP_EMISSIVE[group as usize],
-                ..default()
-            }),
-            transform: Transform {
-                translation: random_pos,
-                scale: Vec3::splat(boid_settings.size * 2.0),
+    commands.spawn((
+        BoidBundle {
+            boid: Boid { group },
+            velocity: Velocity { velocity: initial_velocity },
+            acceleration: Acceleration { acceleration: Vec3::ZERO },
+            pbr_bundle: PbrBundle {
+                mesh: meshes.add(Mesh::from(Cone {
+                    radius: boid_settings.size,
+                    ..default()
+                })),
+                material: materials.add(StandardMaterial {
+                    base_color: GROUP_COLORS[group as usize],
+                    emissive: GROUP_EMISSIVE[group as usize],
+                    ..default()
+                }),
+                transform: Transform {
+                    translation: random_pos,
+                    scale: Vec3::splat(boid_settings.size * 2.0),
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
+            tracked_by_kdtree: TrackedByKDTree3D
         },
-        mode_3d_marker: Mode3DMarker,
-        tracked_by_kdtree: TrackedByKDTree3D
-    });
+        Mode3DMarker));
 }
 
 pub fn spawn_boids(
@@ -133,7 +134,7 @@ pub fn flocking(
     });
 }
 
-fn is_in_field_of_view(position: &Vec3, velocity: &Vec3, other_pos: &Vec3, fov: &f32) -> Option<f32> {
+pub fn is_in_field_of_view(position: &Vec3, velocity: &Vec3, other_pos: &Vec3, fov: &f32) -> Option<f32> {
     let to_other = *other_pos - *position;
     let distance = to_other.length();
     

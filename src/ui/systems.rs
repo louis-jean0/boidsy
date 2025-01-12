@@ -8,6 +8,7 @@ use crate::boids_3d::resources::BoidSettings3D;
 use crate::input::resources::ShapeSettings;
 use crate::ui::events::CursorVisibilityEvent;
 use crate::ui::resources::SimulationState;
+use crate::sky::birds::SkyBoidSettings;  // Add this import
 
 //fps
 use bevy::diagnostic::DiagnosticsStore;
@@ -23,6 +24,7 @@ pub fn setup_ui(
     mut egui_context: EguiContexts,
     mut boid_settings_2d: ResMut<BoidSettings2D>,
     mut boid_settings_3d: ResMut<BoidSettings3D>,
+    mut sky_boid_settings: ResMut<SkyBoidSettings>,  // The type is correct, dereferencing happens automatically
     mut shape_settings: ResMut<ShapeSettings>,
     mut next_state: ResMut<NextState<SimulationState>>,
     state: Res<State<SimulationState>>,
@@ -37,6 +39,9 @@ pub fn setup_ui(
         }
         if ui.button("Underwater").clicked() {
             next_state.set(SimulationState::Underwater);
+        }
+        if ui.button("Sky").clicked() {
+            next_state.set(SimulationState::Sky);
         }
     });
 
@@ -117,6 +122,42 @@ pub fn setup_ui(
             }
             SimulationState::Underwater => {
                 return;
+            }
+            SimulationState::Sky => {
+                let boids_count = &mut sky_boid_settings.count;
+                ui.add(egui::Slider::new(boids_count, 0..=15000).text("Birds count"));
+                let min_speed = &mut sky_boid_settings.min_speed;
+                ui.add(egui::Slider::new(min_speed, 0.0..=500.0).text("Min speed"));
+                let max_speed = &mut sky_boid_settings.max_speed;
+                ui.add(egui::Slider::new(max_speed, 0.0..=1000.0).text("Max speed"));
+                let field_of_view = &mut sky_boid_settings.field_of_view;
+                ui.add(egui::Slider::new(field_of_view, 0.0..=360.0).text("Field of view"));
+                let cohesion_range = &mut sky_boid_settings.cohesion_range;
+                ui.add(egui::Slider::new(cohesion_range, 0.0..=100.0).text("Cohesion range"));
+                let max_alignment_range = *cohesion_range;
+                let alignment_range = &mut sky_boid_settings.alignment_range;
+                ui.add(egui::Slider::new(alignment_range, 0.0..=max_alignment_range).text("Alignment range"));
+                let max_separation_range = *alignment_range;
+                let separation_range = &mut sky_boid_settings.separation_range;
+                ui.add(egui::Slider::new(separation_range, 0.0..=max_separation_range).text("Separation range"));
+                let cohesion_coeff = &mut sky_boid_settings.cohesion_coeff;
+                ui.add(egui::Slider::new(cohesion_coeff, 0.0..=50.0).text("Cohesion"));
+                let aligment_coeff = &mut sky_boid_settings.alignment_coeff;
+                ui.add(egui::Slider::new(aligment_coeff, 0.0..=50.0).text("Alignment"));
+                let separation_coeff = &mut sky_boid_settings.separation_coeff;
+                ui.add(egui::Slider::new(separation_coeff, 0.0..=50.0).text("Separation"));
+                let min_distance_between_boids = &mut sky_boid_settings.min_distance_between_boids;
+                ui.add(egui::Slider::new(min_distance_between_boids, 0.0..=50.0).text("Minimum distance between birds"));
+                let collision_coeff = &mut sky_boid_settings.collision_coeff;
+                ui.add(egui::Slider::new(collision_coeff, 0.0..=50.0).text("Collision"));
+                let attraction_coeff = &mut sky_boid_settings.attraction_coeff;
+                ui.add(egui::Slider::new(attraction_coeff, 0.0..=100.0).text("Attraction to target"));
+                let boids_size = &mut sky_boid_settings.size;
+                if ui.add(egui::Slider::new(boids_size, 0.1..=20.0).text("Birds size")).changed() {
+                    resize_event_writer.send(ResizeEvent {
+                        scale: *boids_size
+                    });
+                }
             }
         }
     });

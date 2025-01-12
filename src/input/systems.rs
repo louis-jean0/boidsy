@@ -52,6 +52,9 @@ pub fn mouse_buttons_input(
                 SimulationState::Underwater => {
                     return;
                 }
+                SimulationState::Sky => {
+                    return;
+                }
             }
         }
     }
@@ -103,7 +106,7 @@ pub fn handle_camera_control(
     mut camera_control: ResMut<CameraControlState>,
     simulation_state: Res<State<SimulationState>>,
 ) {
-    if *simulation_state.get() != SimulationState::Mode3D && *simulation_state.get() != SimulationState::Underwater {
+    if *simulation_state.get() != SimulationState::Mode3D && *simulation_state.get() != SimulationState::Underwater && *simulation_state.get() != SimulationState::Sky {
         return;
     }
 

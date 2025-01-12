@@ -10,10 +10,12 @@ mod kd_tree_2d;
 mod boids_3d;
 mod kd_tree_3d;
 mod underwater;
+mod sky;
 
 use boids_2d::Boids2DPlugin;
 use boids_3d::systems::BOUNDS_SIZE;
 use input::InputPlugin;
+use sky::SkyPlugin;
 use ui::UiPlugin;
 use kd_tree_2d::KDTree2DPlugin;
 use boids_3d::Boids3DPlugin;
@@ -49,6 +51,7 @@ fn main() {
             Boids2DPlugin,
             Boids3DPlugin,
             UnderwaterPlugin,
+            SkyPlugin,
             UiPlugin,
             InputPlugin
         ))

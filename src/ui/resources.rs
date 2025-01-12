@@ -5,5 +5,6 @@ pub enum SimulationState {
     Mode2D,
     #[default]
     Mode3D,
-    Underwater
+    Underwater,
+    Sky
 }

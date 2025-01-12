@@ -8,7 +8,6 @@ pub struct BoidBundle {
     pub velocity: Velocity,
     pub acceleration: Acceleration,
     pub pbr_bundle: PbrBundle,
-    pub mode_3d_marker: Mode3DMarker,
     pub tracked_by_kdtree: TrackedByKDTree3D
 }
 
