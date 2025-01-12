@@ -37,7 +37,9 @@ impl Plugin for UnderwaterPlugin {
 #[derive(Component)]
 pub struct UnderwaterMarker;
 
-pub fn setup_underwater_scene(mut commands: Commands) {
+pub fn setup_underwater_scene(
+    mut commands: Commands
+) {
     commands.spawn((
         Camera3dBundle {
             transform: Transform::from_xyz(-100.0, 2.0, -100.0)
@@ -52,13 +54,35 @@ pub fn setup_underwater_scene(mut commands: Commands) {
             },
             ..default()
         },
+        // Add fog
+        FogSettings {
+            color: Color::rgb(0.25, 0.25, 0.75),
+            falloff: FogFalloff::Linear { 
+                start: 5.0, 
+                end: 100.0 
+            },
+            ..default()
+        },
+        UnderwaterMarker
+    ));
+
+    commands.spawn((
+        DirectionalLightBundle {
+            transform: Transform::from_xyz(0.0, 100.0, 0.0),
+            directional_light: DirectionalLight {
+                color: Color::WHITE,
+                illuminance: 10000.0,
+                ..default()
+            },
+            ..default()
+        },
         UnderwaterMarker
     ));
 }
 
 fn cleanup_underwater_scene(
     mut commands: Commands,
-    query: Query<Entity, With<UnderwaterMarker>>,
+    query: Query<Entity, With<UnderwaterMarker>>
 ) {
     for entity in query.iter() {
         commands.entity(entity).despawn_recursive();

@@ -75,7 +75,7 @@ impl Plugin for BirdsPlugin {
                 resize_boids,
                 avoid_obstacles,
                 confine_birds_movement,
-                handle_mouse_input, // Add this system
+                handle_mouse_input
            ).run_if(in_state(SimulationState::Sky)));
     }
 }
@@ -337,6 +337,7 @@ fn handle_mouse_input(
                     ..default()
                 },
                 ObstacleTag,
+                SkySceneMarker
             ));
         }
     }

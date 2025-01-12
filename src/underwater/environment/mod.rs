@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::underwater::{UnderwaterState};
+use components::UnderwaterEffect;
 
 pub mod components;
 pub mod systems;
@@ -7,15 +7,18 @@ pub mod systems;
 
 pub use systems::*;
 
+use crate::ui::resources::SimulationState;
+
 
 pub struct EnvironmentPlugin;
 
 impl Plugin for EnvironmentPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(UnderwaterState::Enabled), setup_environment)
+        app.init_resource::<UnderwaterEffect>()
+           .add_systems(OnEnter(SimulationState::Underwater), setup_environment)
            .add_systems(Update, (
-               update_water_effects,
                spawn_particles,
-           ).run_if(in_state(UnderwaterState::Enabled)));
+               update_bubbles,
+           ).run_if(in_state(SimulationState::Underwater)));
     }
 }
