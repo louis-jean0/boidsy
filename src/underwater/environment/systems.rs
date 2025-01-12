@@ -6,8 +6,12 @@ use crate::underwater::{UnderwaterMarker, submarine::components::Submarine};
 pub fn setup_environment(
     mut commands: Commands
 ) {
-    // Initialize underwater effect resource
     commands.insert_resource(UnderwaterEffect::default());
+
+    commands.insert_resource(AmbientLight {
+        color: Color::rgb(0.1, 0.2, 0.3),
+        brightness: 0.3,
+    });
 }
 
 pub fn spawn_particles(

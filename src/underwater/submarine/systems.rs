@@ -1,5 +1,6 @@
 use bevy::{core_pipeline::clear_color::ClearColorConfig, prelude::*};
 use crate::underwater::UnderwaterMarker;
+use crate::boids_2d::components::ObstacleTag;
 use super::components::*;
 
 pub fn setup_submarine(
@@ -55,17 +56,17 @@ pub fn setup_submarine(
             },
             ..default()
         },
-        // Add fog
-        FogSettings {
-            color: Color::rgb(0.25, 0.25, 0.75),
-            falloff: FogFalloff::Linear { 
-                start: 20.0, 
-                end: 200.0 
-            },
-            ..default()
-        },
+        // FogSettings {
+        //     color: Color::rgb(0.25, 0.25, 0.75),
+        //     falloff: FogFalloff::Linear { 
+        //         start: 20.0, 
+        //         end: 200.0 
+        //     },
+        //     ..default()
+        // },
         SubmarineCamera::default(),
         UnderwaterMarker,
+        ObstacleTag
     ));
 }
 

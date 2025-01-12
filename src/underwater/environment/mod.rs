@@ -18,7 +18,7 @@ impl Plugin for EnvironmentPlugin {
            .add_systems(OnEnter(SimulationState::Underwater), setup_environment)
            .add_systems(Update, (
                spawn_particles,
-               update_bubbles,
+               update_bubbles
            ).run_if(in_state(SimulationState::Underwater)));
     }
 }

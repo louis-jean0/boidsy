@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy::render::mesh::{Indices, PrimitiveTopology};
+use crate::boids_2d::components::ObstacleTag;
 use crate::underwater::UnderwaterMarker;
 
 use super::{components::*, TerrainChunk};
@@ -12,7 +13,8 @@ const MID_COLOR: Color = Color::rgb(0.2, 0.5, 0.4);     // Green-blue for middle
 const HIGH_COLOR: Color = Color::rgb(0.8, 0.6, 0.1);    // Lighter green for peaks
 
 const ISOLEVEL: f32 = 0.7; // Lowered to create more solid terrain
-const TERRAIN_SCALE: f32 = 75.0;
+pub const TERRAIN_SIZE: f32 = 500.0;
+pub const TERRAIN_SCALE: f32 = 75.0;
 const TERRAIN_HEIGHT_SCALE: f32 = 1.0; // Increased for more dramatic height variation
 const CHUNK_RANGE: i32 = 2; // How many chunks in each direction
 const GROUND_Y_POSITION: f32 = -30.0; // Match this with the terrain transform y position
@@ -24,7 +26,7 @@ pub fn generate_terrain_chunks(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Create bumpy ground plane with adjusted size
-    let size = 500.0; // Match terrain size plus small overlap
+    let size = TERRAIN_SIZE; // Match terrain size plus small overlap
     let divisions = 2000; // Keep reasonable vertex count
     let bump_height = 15.0;
     let perlin = Perlin::new(3); // Different seed from terrain
@@ -86,6 +88,7 @@ pub fn generate_terrain_chunks(
             ..default()
         },
         UnderwaterMarker,
+        ObstacleTag
     ));
 
     // Create white base material for vertex colors to show through
@@ -244,6 +247,7 @@ fn generate_chunk(
             position: chunk_position,
         },
         UnderwaterMarker,
+        ObstacleTag
     ));
 }
 
@@ -252,13 +256,11 @@ fn generate_mesh(density: &DensityField) -> (Vec<[f32; 3]>, Vec<u32>) {
     let mut indices = Vec::new();
     let scale = 1.0 / CHUNK_SIZE as f32;
 
-    // Process only the non-overlapping part of the chunk
     for x in 0..CHUNK_SIZE {
         for y in 0..CHUNK_SIZE {
             for z in 0..CHUNK_SIZE {
                 let pos = Vec3::new(x as f32, y as f32, z as f32);
                 
-                // Get density values for cube corners
                 let mut cube_values = [0.0; 8];
                 let mut cube_positions = [Vec3::ZERO; 8];
                 
@@ -271,10 +273,8 @@ fn generate_mesh(density: &DensityField) -> (Vec<[f32; 3]>, Vec<u32>) {
                     cube_positions[i] = (pos + Vec3::new(*dx, *dy, *dz)) * scale;
                 }
 
-                // Generate vertices for this cube
                 let cube_vertices = generate_vertices(&cube_positions, &cube_values, ISOLEVEL);
                 
-                // Add vertices and indices
                 for vertex in cube_vertices {
                     indices.push(vertices.len() as u32);
                     vertices.push([vertex.x, vertex.y, vertex.z]);
@@ -282,7 +282,6 @@ fn generate_mesh(density: &DensityField) -> (Vec<[f32; 3]>, Vec<u32>) {
             }
         }
     }
-
     (vertices, indices)
 }
 

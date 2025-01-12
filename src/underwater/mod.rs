@@ -3,10 +3,12 @@ use bevy::prelude::*;
 mod submarine;
 mod terrain;
 mod environment;
+mod fish;
 
 use submarine::SubmarinePlugin;
 use terrain::TerrainPlugin;
 use environment::EnvironmentPlugin;
+use fish::FishPlugin;
 
 use crate::{cleanup_3d_mode, ui::resources::SimulationState};
 
@@ -19,6 +21,7 @@ impl Plugin for UnderwaterPlugin {
                SubmarinePlugin,
                TerrainPlugin,
                EnvironmentPlugin,
+               FishPlugin,
            ))
            .add_systems(OnEnter(SimulationState::Underwater), (
             setup_underwater_scene,

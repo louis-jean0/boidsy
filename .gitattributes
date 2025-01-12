@@ -2,3 +2,7 @@ Cargo.lock text eol=lf
 assets/models/clown_fish/scene.gltf text eol=lf
 assets/models/bird/license.txt text eol=lf
 assets/models/bird/scene.gltf text eol=lf
+assets/models/koi_fish/license.txt text eol=lf
+assets/models/koi_fish/scene.gltf text eol=lf
+assets/models/puffer_fish/license.txt text eol=lf
+assets/models/puffer_fish/scene.gltf text eol=lf

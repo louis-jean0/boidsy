@@ -1,0 +1,11 @@
+Model Information:
+* title:	Polygonal puffer fish
+* source:	https://sketchfab.com/3d-models/polygonal-puffer-fish-9b16033c7c724891badcb1245fa894a9
+* author:	Allie2k (https://sketchfab.com/Allie2k)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Polygonal puffer fish" (https://sketchfab.com/3d-models/polygonal-puffer-fish-9b16033c7c724891badcb1245fa894a9) by Allie2k (https://sketchfab.com/Allie2k) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
