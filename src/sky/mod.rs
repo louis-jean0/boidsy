@@ -42,7 +42,7 @@ pub fn setup_sky_scene(
             },
             ..default()
         },
-        SkySceneMarker,
+        SkySceneMarker
     ));
 
     // Lighting
@@ -57,7 +57,7 @@ pub fn setup_sky_scene(
                 .looking_at(Vec3::new(-0.5, -1.0, -0.5), Vec3::Y),
             ..default()
         },
-        SkySceneMarker,
+        SkySceneMarker
     ));
 
     // Ambient light

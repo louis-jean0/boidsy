@@ -24,7 +24,7 @@ pub fn setup_ui(
     mut egui_context: EguiContexts,
     mut boid_settings_2d: ResMut<BoidSettings2D>,
     mut boid_settings_3d: ResMut<BoidSettings3D>,
-    mut sky_boid_settings: ResMut<SkyBoidSettings>,  // The type is correct, dereferencing happens automatically
+    mut sky_boid_settings: ResMut<SkyBoidSettings>,
     mut shape_settings: ResMut<ShapeSettings>,
     mut next_state: ResMut<NextState<SimulationState>>,
     state: Res<State<SimulationState>>,
@@ -44,6 +44,10 @@ pub fn setup_ui(
             next_state.set(SimulationState::Sky);
         }
     });
+
+    if state.get() == &SimulationState::Underwater {
+        return;
+    }
 
     egui::Window::new("Boids settings").show(egui_context.ctx_mut(), |ui| {
         match *state.get() {

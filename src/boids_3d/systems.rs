@@ -359,19 +359,15 @@ pub fn setup_3d_scene(
         DirectionalLightBundle {
             directional_light: DirectionalLight {
                 shadows_enabled: true,
-                illuminance: 10000.0,
+                illuminance: 15000.0,
                 ..default()
             },
-            transform: Transform::from_xyz(50.0, 50.0, 50.0).looking_at(Vec3::ZERO, Vec3::Y),
+            transform: Transform::from_xyz(0.0, 10.0, 0.0)
+                .looking_at(Vec3::new(-0.5, -1.0, -0.5), Vec3::Y),
             ..default()
         },
         Mode3DMarker
     ));
-
-    commands.insert_resource(AmbientLight {
-        color: Color::WHITE,
-        brightness: 0.5,
-    });
 
     let boundary_material = materials.add(StandardMaterial {
         base_color: Color::rgba(1.0, 0.5, 0.0, 0.05),

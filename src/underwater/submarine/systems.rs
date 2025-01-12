@@ -21,14 +21,13 @@ pub fn setup_submarine(
         Submarine::default(),
         UnderwaterMarker,
     )).with_children(|parent| {
-        // Enhanced spotlight settings
         parent.spawn(SpotLightBundle {
             spot_light: SpotLight {
                 color: Color::rgb(1.0, 0.95, 0.8),
                 intensity: 40000.0,
                 range: 100.0,
-                outer_angle: 0.8,  // Wider angle
-                inner_angle: 0.6,  // Softer inner cone
+                outer_angle: 0.8,
+                inner_angle: 0.6,
                 shadows_enabled: true,
                 ..default()
             },
@@ -41,7 +40,6 @@ pub fn setup_submarine(
         });
     });
 
-    // Spawn camera directly
     commands.spawn((
         Camera3dBundle {
             transform: Transform::from_xyz(-100.0, 2.0, -100.0)
@@ -142,13 +140,11 @@ pub fn update_camera(
         let desired_position = target - submarine_transform.forward() * camera_settings.follow_distance
             + Vec3::Y * camera_settings.height_offset;
 
-        // Smoothly interpolate camera position
         camera_transform.translation = camera_transform.translation.lerp(
             desired_position,
             time.delta_seconds() * 5.0
         );
 
-        // Make camera look at submarine
         camera_transform.look_at(target, Vec3::Y);
     }
 }
