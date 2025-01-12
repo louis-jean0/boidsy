@@ -132,7 +132,7 @@ fn generate_chunk(
                     world_x * 1.5,
                     world_y * 0.8,
                     world_z * 1.5
-                ]) * 1.2; // Amplified mountain noise
+                ]);
                 
                 // Medium features (overhangs and ledges)
                 let medium_noise = perlin.get([
@@ -270,7 +270,6 @@ fn generate_mesh(density: &DensityField) -> (Vec<[f32; 3]>, Vec<u32>) {
     (vertices, indices)
 }
 
-// Add this function to calculate proper normals
 fn calculate_normals(vertices: &[[f32; 3]], indices: &[u32]) -> Vec<[f32; 3]> {
     let mut normals = vec![[0.0, 0.0, 0.0]; vertices.len()];
     
@@ -282,7 +281,6 @@ fn calculate_normals(vertices: &[[f32; 3]], indices: &[u32]) -> Vec<[f32; 3]> {
             
             let normal = (v1 - v0).cross(v2 - v0).normalize();
             
-            // Add the normal to each vertex of the triangle
             for &index in triangle {
                 normals[index as usize][0] += normal.x;
                 normals[index as usize][1] += normal.y;
@@ -291,7 +289,6 @@ fn calculate_normals(vertices: &[[f32; 3]], indices: &[u32]) -> Vec<[f32; 3]> {
         }
     }
     
-    // Normalize all normals
     normals.iter_mut().for_each(|n| {
         let normal = Vec3::from(*n).normalize();
         *n = [normal.x, normal.y, normal.z];
@@ -300,7 +297,6 @@ fn calculate_normals(vertices: &[[f32; 3]], indices: &[u32]) -> Vec<[f32; 3]> {
     normals
 }
 
-// Add this helper function for linear interpolation
 fn lerp(a: f32, b: f32, t: f32) -> f32 {
     a + (b - a) * t
 }
