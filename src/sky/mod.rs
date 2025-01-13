@@ -60,7 +60,6 @@ pub fn setup_sky_scene(
         SkySceneMarker
     ));
 
-    // Ambient light
     commands.insert_resource(AmbientLight {
         brightness: 0.3,
         ..default()

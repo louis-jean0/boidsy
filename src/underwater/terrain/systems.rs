@@ -7,7 +7,6 @@ use super::{components::*, TerrainChunk};
 use noise::{NoiseFn, Perlin};
 use super::marching_cubes::{generate_vertices, CORNERS};
 
-// Adjust colors for better contrast
 const DEEP_COLOR: Color = Color::rgb(0.1, 0.2, 0.4);
 const MID_COLOR: Color = Color::rgb(0.2, 0.5, 0.4);
 const HIGH_COLOR: Color = Color::rgb(0.8, 0.6, 0.1);
@@ -86,13 +85,11 @@ pub fn generate_terrain_chunks(
         ObstacleTag
     ));
 
-    // Create white base material for vertex colors to show through
     let terrain_material = materials.add(StandardMaterial {
         base_color: Color::WHITE,
         ..default()
     });
 
-    // Generate chunks in a grid
     for chunk_x in -CHUNK_RANGE..=CHUNK_RANGE {
         for chunk_z in -CHUNK_RANGE..=CHUNK_RANGE {
             let chunk_position = IVec3::new(chunk_x, 0, chunk_z);

@@ -48,15 +48,14 @@ fn setup_environment(
         }),
     ];
 
-    // Increase the radius and adjust the angle increment to disperse the islands more
     let base_radius = 100.0;
-    let angle_increment = std::f32::consts::PI * 0.125; // Adjust the angle increment for more dispersion
-    let base_height = -50.0; // Base height to ensure islands are above the ground plane
+    let angle_increment = std::f32::consts::PI * 0.125; 
+    let base_height = -50.0;
 
     for i in 0..50 {
         let angle = i as f32 * angle_increment;
-        let radius = base_radius + (i as f32 * 10.0).sin() * 40.0; // Increase the base radius and variation
-        let height = base_height + 20.0 + (i as f32 * 1.5).sin() * 100.0; // Ensure height is above -50
+        let radius = base_radius + (i as f32 * 10.0).sin() * 40.0;
+        let height = base_height + 20.0 + (i as f32 * 1.5).sin() * 100.0;
         if height < -50.0 {
             continue;
         }

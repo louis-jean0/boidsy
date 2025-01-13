@@ -28,7 +28,6 @@ pub fn spawn_particles(
         if let Ok(submarine_transform) = submarine_query.get_single() {
             let mut rng = rand::thread_rng();
             
-            // Spawn bubbles around the submarine
             let spawn_position = submarine_transform.translation + Vec3::new(
                 rng.gen_range(-5.0..5.0),
                 rng.gen_range(-2.0..0.0),
@@ -65,11 +64,10 @@ pub fn spawn_particles(
 
 pub fn update_bubbles(
     mut commands: Commands,
-    mut materials: ResMut<Assets<StandardMaterial>>,
     mut bubbles: Query<(Entity, &mut Transform, &mut Bubble, &Handle<StandardMaterial>)>,
     time: Res<Time>,
 ) {
-    for (entity, mut transform, mut bubble, material_handle) in bubbles.iter_mut() {
+    for (entity, mut transform, mut bubble, _) in bubbles.iter_mut() {
         bubble.lifetime.tick(time.delta());
         if bubble.lifetime.finished() {
             commands.entity(entity).despawn();
@@ -80,10 +78,5 @@ pub fn update_bubbles(
         bubble.velocity.z += (time.elapsed_seconds() * 2.0).cos() * 0.01;
         
         transform.translation += bubble.velocity * time.delta_seconds();
-
-        // if let Some(material) = materials.get_mut(material_handle) {
-        //     let alpha = (bubble.lifetime.percent() * 0.3).min(0.3);
-        //     material.base_color.set_a(alpha);
-        // }
     }
 }

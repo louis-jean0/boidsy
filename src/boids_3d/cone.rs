@@ -1,13 +1,9 @@
 use bevy::render::mesh::{Indices, Mesh, PrimitiveTopology};
 
-/// Un cône avec un sommet et une base circulaire.
 #[derive(Debug, Clone, Copy)]
 pub struct Cone {
-    /// Le rayon de la base du cône.
     pub radius: f32,
-    /// La hauteur du cône.
     pub height: f32,
-    /// Le nombre de segments sur la base.
     pub segments: usize,
 }
 
@@ -32,11 +28,9 @@ impl From<Cone> for Mesh {
         let radius = cone.radius;
         let segments = cone.segments;
 
-        // Tip at -z (Bevy's forward direction)
         vertices.push([0.0, 0.0, -height]);
         uvs.push([0.5, 1.0]);
 
-        // Base at z=0
         for i in 0..=segments {
             let angle = i as f32 * std::f32::consts::TAU / segments as f32;
             let x = radius * angle.cos();

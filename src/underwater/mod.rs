@@ -21,7 +21,7 @@ impl Plugin for UnderwaterPlugin {
                SubmarinePlugin,
                TerrainPlugin,
                EnvironmentPlugin,
-               FishPlugin,
+               FishPlugin
            ))
            .add_systems(OnEnter(SimulationState::Underwater), cleanup_3d_mode)
            .add_systems(OnExit(SimulationState::Underwater), cleanup_underwater_scene);

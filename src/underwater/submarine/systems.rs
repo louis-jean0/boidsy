@@ -7,7 +7,6 @@ pub fn setup_submarine(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    // Spawn submarine
     commands.spawn((
         SceneBundle {
             scene: asset_server.load("models/submarine/scene.gltf#Scene0"),
@@ -78,7 +77,6 @@ pub fn submarine_movement(
         let mut rotation = 0.0;
         let mut pitch_change = 0.0;
 
-        // Forward/Backward
         if keyboard.pressed(KeyCode::Z) {
             movement += transform.forward() * submarine.speed;
         }
@@ -86,7 +84,6 @@ pub fn submarine_movement(
             movement += transform.forward() * -submarine.speed;
         }
 
-        // Rotation (Yaw)
         if keyboard.pressed(KeyCode::Q) {
             rotation += submarine.turn_speed;
         }
@@ -94,30 +91,25 @@ pub fn submarine_movement(
             rotation -= submarine.turn_speed;
         }
 
-        // Up/Down with pitch
         if keyboard.pressed(KeyCode::Space) {
             movement.y += submarine.vertical_speed;
-            pitch_change += submarine.turn_speed * 0.5; // Reduced pitch rate
+            pitch_change += submarine.turn_speed * 0.5;
         }
         if keyboard.pressed(KeyCode::ShiftLeft) {
             movement.y -= submarine.vertical_speed;
-            pitch_change -= submarine.turn_speed * 0.5; // Reduced pitch rate
+            pitch_change -= submarine.turn_speed * 0.5;
         }
 
-        // Update and clamp pitch
         submarine.current_pitch = (submarine.current_pitch + pitch_change * time.delta_seconds())
             .clamp(-submarine.max_pitch, submarine.max_pitch);
 
-        // Return to level when not pressing up/down
         if !keyboard.pressed(KeyCode::Space) && !keyboard.pressed(KeyCode::ShiftLeft) {
-            submarine.current_pitch = submarine.current_pitch * 0.95; // Gradual return to level
+            submarine.current_pitch = submarine.current_pitch * 0.95;
         }
 
-        // Apply movement and rotation
         transform.translation += movement * time.delta_seconds();
         transform.rotate_y(rotation * time.delta_seconds());
         
-        // Set absolute rotation for pitch to prevent accumulation
         let yaw = transform.rotation.to_euler(EulerRot::YXZ).0;
         transform.rotation = Quat::from_euler(
             EulerRot::YXZ,

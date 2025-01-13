@@ -30,14 +30,12 @@ pub fn generate_vertices(points: &[Vec3; 8], values: &[f32; 8], isolevel: f32) -
     let mut vertices = Vec::new();
     let mut cubeindex = 0;
 
-    // Determine which vertices are inside/outside the surface
     for i in 0..8 {
         if values[i] < isolevel {
             cubeindex |= 1 << i;
         }
     }
 
-    // Calculate vertices where surface intersects cube
     let mut edge_vertices: [Option<Vec3>; 12] = [None; 12];
     
     for (i, edge) in EDGES.iter().enumerate() {
@@ -52,7 +50,6 @@ pub fn generate_vertices(points: &[Vec3; 8], values: &[f32; 8], isolevel: f32) -
         }
     }
 
-    // Create triangles according to triangulation table
     let mut i = 0;
     while i < 16 && TRIANGLE_TABLE[cubeindex][i] != -1 {
         if let (Some(v1), Some(v2), Some(v3)) = (

@@ -123,16 +123,13 @@ pub fn apply_underwater_flocking(
         let mut repulsion_neighbors = Vec::new();
         let mut alignment_neighbors = Vec::new();
 
-        // Only check neighbors within the largest possible range
         let max_range = settings.cohesion_range.max(settings.alignment_range).max(settings.separation_range);
 
         for (_, neighbor_entity) in kd_tree.within_distance(position, max_range) {
             let neighbor_entity = neighbor_entity.unwrap();
             if neighbor_entity == entity { continue; }
 
-            // Only interact with same species
             if let Ok((_, neighbor_transform, neighbor_velocity, _, neighbor_fish_type)) = boid_query.get(neighbor_entity) {
-                // Skip if different species
                 if std::mem::discriminant(&fish_type.species) != std::mem::discriminant(&neighbor_fish_type.species) {
                     continue;
                 }
@@ -150,7 +147,6 @@ pub fn apply_underwater_flocking(
             }
         }
 
-        // Calculate forces using species-specific settings
         let cohesion_force = cohesion(&position, &cohesion_neighbors, &settings.cohesion_coeff);
         let separation_force = separation(&position, &repulsion_neighbors, &settings.separation_coeff);
         let alignment_force = alignment(&velocity.velocity, &alignment_neighbors, &settings.alignment_coeff);
