@@ -52,7 +52,7 @@ pub fn spawn_particles(
                 Bubble {
                     velocity: Vec3::new(
                         rng.gen_range(-0.5..0.5),
-                        rng.gen_range(2.0..4.0),  // Faster upward movement
+                        rng.gen_range(2.0..4.0),
                         rng.gen_range(-0.5..0.5),
                     ),
                     lifetime: Timer::from_seconds(rng.gen_range(2.0..4.0), TimerMode::Once),
@@ -81,9 +81,9 @@ pub fn update_bubbles(
         
         transform.translation += bubble.velocity * time.delta_seconds();
 
-        if let Some(material) = materials.get_mut(material_handle) {
-            let alpha = (bubble.lifetime.percent() * 0.3).min(0.3);
-            material.base_color.set_a(alpha);
-        }
+        // if let Some(material) = materials.get_mut(material_handle) {
+        //     let alpha = (bubble.lifetime.percent() * 0.3).min(0.3);
+        //     material.base_color.set_a(alpha);
+        // }
     }
 }
