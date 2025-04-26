@@ -1,6 +1,16 @@
+![Rust Version](https://img.shields.io/badge/rust-1.70%2B-orange)
+![Bevy Version](https://img.shields.io/badge/bevy-0.12-blue)
+![License](https://img.shields.io/github/license/louis-jean0/boidsy)
+
 # Boidsy
 
 Interactive boids simulation in 2D and 3D using Bevy and Rust
+
+## 🎥 Demo
+
+<p align="center">
+  <img src="assets/boidsy.gif" width="800"/>
+</p>
 
 ## Preview
 
