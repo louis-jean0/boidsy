@@ -4,8 +4,6 @@
 
 # Boidsy
 
-Interactive boids simulation in 2D and 3D using Bevy and Rust
-
 <p align="center">
   <img src="assets/boidsy.gif" width="800"/>
 </p>
