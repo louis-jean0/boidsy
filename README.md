@@ -41,7 +41,7 @@ This project was developed as part of the **"Projet 3D"** teaching unit at the *
 
 ---
 
-## 🛠️ Prerequisites
+## 🧰 Prerequisites
 
 - **Rust** 1.70.x – 1.75.x (required for Bevy 0.12.0)  
 - **Cargo** (comes bundled with Rust)
