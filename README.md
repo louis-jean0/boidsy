@@ -1,6 +1,8 @@
-![Rust Version](https://img.shields.io/badge/Rust-1.70%2B-orange)
-![Bevy Version](https://img.shields.io/badge/Bevy-0.12-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+<div align="center">
+  ![Rust Version](https://img.shields.io/badge/Rust-1.70%2B-orange)
+  ![Bevy Version](https://img.shields.io/badge/Bevy-0.12-blue)
+  ![License](https://img.shields.io/badge/license-MIT-green)
+</div>
 
 # Boidsy
 
