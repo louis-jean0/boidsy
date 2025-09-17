@@ -1,7 +1,7 @@
 <div align="center">
-  ![Rust Version](https://img.shields.io/badge/Rust-1.70%2B-orange)
-  ![Bevy Version](https://img.shields.io/badge/Bevy-0.12-blue)
-  ![License](https://img.shields.io/badge/license-MIT-green)
+  <img src="https://img.shields.io/badge/Rust-1.70%2B-orange" alt="Rust">
+  <img src="https://img.shields.io/badge/Bevy-0.12-blue" alt="Bevy">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License MIT")
 </div>
 
 # Boidsy
